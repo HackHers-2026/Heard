@@ -207,6 +207,7 @@
         gap: 8px;
         width: 100%;
         margin-top: 12px;
+        margin-bottom: 12px;
         padding: 10px;
         border: 1px dashed rgba(170, 29, 106, 0.35);
         border-radius: 12px;
@@ -469,30 +470,30 @@
         font-size: 1.15rem;
       }
 
-      /* Main layout */
+      /* Full-page main layout */
 
       .main-content {
         display: flex;
         flex: 1;
-        align-items: center;
-        justify-content: center;
+        align-items: stretch;
+        justify-content: stretch;
         min-height: 100vh;
         margin-left: 270px;
-        padding: 40px;
+        padding: 0;
       }
 
       .chat-panel,
       .dm-panel {
         display: flex;
-        width: min(920px, 100%);
-        min-height: calc(100vh - 80px);
+        width: 100%;
+        min-height: 100vh;
         flex-direction: column;
         overflow: hidden;
-        border: 1px solid rgba(150, 97, 125, 0.13);
-        border-radius: 28px;
-        background: rgba(255, 255, 255, 0.55);
-        box-shadow: 0 24px 70px rgba(150, 97, 125, 0.1);
-        backdrop-filter: blur(18px);
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
       }
 
       .chat-panel {
@@ -508,12 +509,13 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 27px 32px;
-        border-bottom: 1px solid rgba(150, 97, 125, 0.1);
+        padding: 27px 40px;
+        border-bottom: 1px solid rgba(150, 97, 125, 0.12);
+        background: rgba(255, 255, 255, 0.22);
       }
 
       .dm-header {
-        padding: 24px 30px;
+        padding: 24px 40px;
       }
 
       .chat-breadcrumb {
@@ -544,7 +546,7 @@
         flex: 1;
         flex-direction: column;
         gap: 25px;
-        padding: 38px;
+        padding: 40px;
         overflow-y: auto;
       }
 
@@ -603,13 +605,13 @@
         color: var(--white);
       }
 
-      /* New selectable chat pills */
+      /* Chat pills */
 
       .chat-pills {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-        padding: 0 28px 15px;
+        padding: 0 40px 15px;
       }
 
       .chat-pill {
@@ -653,11 +655,11 @@
       }
 
       .message-form {
-        margin: 0 28px 28px;
+        margin: 0 40px 28px;
       }
 
       .dm-message-form {
-        margin: 0 26px 26px;
+        margin: 0 40px 28px;
       }
 
       .message-form input,
@@ -694,7 +696,9 @@
 
       .channel-panel {
         display: none;
-        width: min(920px, 100%);
+        width: 100%;
+        min-height: 100vh;
+        padding: 40px;
       }
 
       .channel-header {
@@ -734,6 +738,7 @@
 
       .channel-feed {
         display: grid;
+        width: min(920px, 100%);
         gap: 18px;
       }
 
@@ -796,10 +801,15 @@
         font-size: 0.72rem;
       }
 
-      .post-menu {
+      .post-menu,
+      .file-action,
+      .post-action {
         border: 0;
         background: transparent;
         color: var(--mauve);
+      }
+
+      .post-menu {
         font-size: 1rem;
       }
 
@@ -889,7 +899,6 @@
         margin-left: auto;
         place-items: center;
         flex-shrink: 0;
-        border: 0;
         border-radius: 10px;
         background: rgba(255, 255, 255, 0.8);
         color: var(--magenta);
@@ -922,10 +931,7 @@
 
       .post-action {
         padding: 7px 9px;
-        border: 0;
         border-radius: 9px;
-        background: transparent;
-        color: var(--mauve);
         font-size: 0.72rem;
         font-weight: 700;
       }
@@ -1071,12 +1077,17 @@
 
         .main-content {
           margin-left: 78px;
-          padding: 20px;
+          padding: 0;
         }
 
         .chat-panel,
         .dm-panel {
-          min-height: calc(100vh - 40px);
+          min-height: 100vh;
+        }
+
+        .channel-panel {
+          min-height: 100vh;
+          padding: 24px 18px;
         }
 
         .channel-header {
@@ -1095,7 +1106,7 @@
 
         .chat-header,
         .dm-header {
-          padding: 20px;
+          padding: 20px 18px;
         }
 
         .messages,
@@ -1115,9 +1126,9 @@
 
         .message-form,
         .dm-message-form {
-          margin-right: 16px;
-          margin-bottom: 16px;
-          margin-left: 16px;
+          margin-right: 18px;
+          margin-bottom: 18px;
+          margin-left: 18px;
         }
       }
     </style>
@@ -1326,7 +1337,6 @@
             </div>
           </div>
 
-          <!-- Seven selectable chat pills -->
           <div
             class="chat-pills"
             id="chatPills"
@@ -1630,6 +1640,7 @@
       const messageForm = document.getElementById("messageForm");
       const messageInput = document.getElementById("messageInput");
       const newChatButton = document.getElementById("newChatButton");
+
       let chatPills = document.querySelectorAll(".chat-pill");
       let topicFlowStarted = false;
 
@@ -1710,10 +1721,10 @@
 
       function updateActiveSection(pageName) {
         sectionLinks.forEach((link) => {
-          const isActive =
-            link.dataset.page === pageName && pageName !== "DMs";
-
-          link.classList.toggle("active-section", isActive);
+          link.classList.toggle(
+            "active-section",
+            link.dataset.page === pageName && pageName !== "DMs"
+          );
         });
       }
 
@@ -1778,61 +1789,6 @@
         messages.appendChild(message);
       }
 
-      function renderDirectMessages(userName) {
-        const contact = dmContacts[userName];
-
-        if (!contact) {
-          return;
-        }
-
-        activeDmName.textContent = userName;
-        activeDmAvatar.textContent = contact.initials;
-        activeDmAvatar.className =
-          `dm-avatar large-avatar ${contact.colorClass}`;
-
-        activeDmStatus.innerHTML = "";
-
-        const statusDot = document.createElement("span");
-        statusDot.className = "dm-online-dot";
-
-        activeDmStatus.append(
-          statusDot,
-          document.createTextNode(contact.status)
-        );
-
-        dmMessageInput.placeholder = `Message ${userName}...`;
-        dmMessages.innerHTML = "";
-
-        contact.messages.forEach((message) => {
-          const messageElement = document.createElement("div");
-          messageElement.className = `dm-message ${message.type}`;
-
-          if (message.type === "received") {
-            const avatar = document.createElement("div");
-            avatar.className =
-              `dm-message-avatar ${contact.colorClass}`;
-            avatar.textContent = contact.initials;
-            messageElement.appendChild(avatar);
-          }
-
-          const messageBody = document.createElement("div");
-          messageBody.className = "dm-message-body";
-
-          const time = document.createElement("span");
-          time.className = "dm-message-time";
-          time.textContent = message.time;
-
-          const text = document.createElement("p");
-          text.textContent = message.text;
-
-          messageBody.append(time, text);
-          messageElement.appendChild(messageBody);
-          dmMessages.appendChild(messageElement);
-        });
-
-        dmMessages.scrollTop = dmMessages.scrollHeight;
-      }
-
       function addAiUserMessage(text) {
         const message = document.createElement("div");
         message.className = "message user-message";
@@ -1879,6 +1835,60 @@
         messages.appendChild(message);
       }
 
+      function renderDirectMessages(userName) {
+        const contact = dmContacts[userName];
+
+        if (!contact) {
+          return;
+        }
+
+        activeDmName.textContent = userName;
+        activeDmAvatar.textContent = contact.initials;
+        activeDmAvatar.className =
+          `dm-avatar large-avatar ${contact.colorClass}`;
+
+        activeDmStatus.innerHTML = "";
+
+        const statusDot = document.createElement("span");
+        statusDot.className = "dm-online-dot";
+
+        activeDmStatus.append(
+          statusDot,
+          document.createTextNode(contact.status)
+        );
+
+        dmMessageInput.placeholder = `Message ${userName}...`;
+        dmMessages.innerHTML = "";
+
+        contact.messages.forEach((message) => {
+          const messageElement = document.createElement("div");
+          messageElement.className = `dm-message ${message.type}`;
+
+          if (message.type === "received") {
+            const avatar = document.createElement("div");
+            avatar.className = `dm-message-avatar ${contact.colorClass}`;
+            avatar.textContent = contact.initials;
+            messageElement.appendChild(avatar);
+          }
+
+          const messageBody = document.createElement("div");
+          messageBody.className = "dm-message-body";
+
+          const time = document.createElement("span");
+          time.className = "dm-message-time";
+          time.textContent = message.time;
+
+          const text = document.createElement("p");
+          text.textContent = message.text;
+
+          messageBody.append(time, text);
+          messageElement.appendChild(messageBody);
+          dmMessages.appendChild(messageElement);
+        });
+
+        dmMessages.scrollTop = dmMessages.scrollHeight;
+      }
+
       function addDmMessage(type, text, initials, colorClass, time) {
         const message = document.createElement("div");
         message.className = `dm-message ${type}`;
@@ -1907,59 +1917,31 @@
 
       function showTopicPills() {
         chatPillsContainer.innerHTML = `
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Business"
-          >
+          <button type="button" class="chat-pill" data-prompt="Business">
             ◇ Business
           </button>
 
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Technology"
-          >
+          <button type="button" class="chat-pill" data-prompt="Technology">
             ◉ Tech
           </button>
 
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Marketing"
-          >
+          <button type="button" class="chat-pill" data-prompt="Marketing">
             ✦ Marketing
           </button>
 
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Design"
-          >
+          <button type="button" class="chat-pill" data-prompt="Design">
             ◌ Design
           </button>
 
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Education"
-          >
+          <button type="button" class="chat-pill" data-prompt="Education">
             Aa Education
           </button>
 
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Finance"
-          >
+          <button type="button" class="chat-pill" data-prompt="Finance">
             $ Finance
           </button>
 
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Personal growth"
-          >
+          <button type="button" class="chat-pill" data-prompt="Personal growth">
             ✧ Personal
           </button>
         `;
@@ -1999,8 +1981,6 @@
         });
       }
 
-      /* AI Chat history */
-
       function attachChatListener(chat) {
         chat.addEventListener("click", () => {
           document
@@ -2035,7 +2015,7 @@
         renderAiChat("New conversation");
       });
 
-      /* Selectable AI Chat pills */
+      /* AI Chat pills */
 
       attachChatPillListeners();
 
@@ -2077,7 +2057,7 @@
         }
       });
 
-      /* Main navigation */
+      /* Navigation */
 
       sectionLinks.forEach((link) => {
         link.addEventListener("click", () => {
@@ -2181,11 +2161,37 @@
 
       /* Channel interactions */
 
-      document.querySelectorAll(".dm-button").forEach((button) => {
-        button.addEventListener("click", () => {
-          button.textContent = "Message opened";
+      function attachPostInteractions(post) {
+        const dmButton = post.querySelector(".dm-button");
+        const fileAction = post.querySelector(".file-action");
+
+        if (dmButton) {
+          dmButton.addEventListener("click", () => {
+            dmButton.textContent = "Message opened";
+          });
+        }
+
+        if (fileAction) {
+          fileAction.addEventListener("click", () => {
+            const originalText = fileAction.textContent;
+            fileAction.textContent = "✓";
+
+            window.setTimeout(() => {
+              fileAction.textContent = originalText;
+            }, 1200);
+          });
+        }
+      }
+
+      document
+        .querySelectorAll(".dm-button, .file-action")
+        .forEach((element) => {
+          element.addEventListener("click", () => {
+            if (element.classList.contains("dm-button")) {
+              element.textContent = "Message opened";
+            }
+          });
         });
-      });
 
       document.querySelectorAll(".file-action").forEach((button) => {
         button.addEventListener("click", () => {
@@ -2250,23 +2256,7 @@
           `;
 
           document.getElementById("channelFeed").prepend(post);
-
-          post.querySelector(".dm-button").addEventListener("click", (event) => {
-            event.currentTarget.textContent = "Message opened";
-          });
-
-          post
-            .querySelector(".file-action")
-            .addEventListener("click", (event) => {
-              const button = event.currentTarget;
-              const originalText = button.textContent;
-
-              button.textContent = "✓";
-
-              window.setTimeout(() => {
-                button.textContent = originalText;
-              }, 1200);
-            });
+          attachPostInteractions(post);
         });
 
       /* Initial state */
