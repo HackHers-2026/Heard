@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Heard — Live Pitch Coach",
+  "version": "0.1.0",
+  "description": "Practice your pitch over Google Slides and get live, encouraging AI feedback.",
+  "permissions": ["activeTab", "scripting", "storage", "tabCapture"],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "https://docs.google.com/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Heard"
+  },
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://docs.google.com/presentation/*"],
+      "js": ["src/content.js"],
+      "css": ["src/overlay.css"]
+    }
+  ]
+}

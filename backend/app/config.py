@@ -1,0 +1,43 @@
+"""Application settings loaded from environment variables / .env file."""
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # Core
+    app_env: str = "development"
+    secret_key: str = "change-me"
+    access_token_expire_minutes: int = 10080
+    database_url: str = "sqlite:///./heard.db"
+    cors_origins: str = "http://localhost:5173"
+
+    # Gemini
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-1.5-flash"
+
+    # ElevenLabs
+    elevenlabs_api_key: str = ""
+    elevenlabs_stt_model: str = "scribe_v1"
+
+    # Backboard (memory)
+    backboard_api_key: str = ""
+    backboard_base_url: str = "https://api.backboard.io"
+
+    # TigerTable
+    tigertable_api_key: str = ""
+    tigertable_base_url: str = "https://api.tigertable.com"
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()

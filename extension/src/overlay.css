@@ -1,0 +1,45 @@
+#heard-overlay {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 300px;
+  z-index: 2147483647;
+  font-family: system-ui, sans-serif;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #ece7f0;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.18);
+  overflow: hidden;
+}
+.heard-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-weight: 700;
+  color: #7c3aed;
+  border-bottom: 1px solid #f0ecf4;
+}
+.heard-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #db2777;
+}
+#heard-toggle {
+  margin-left: auto;
+  padding: 5px 12px;
+  border: none; border-radius: 8px;
+  background: #7c3aed; color: #fff; font-weight: 600; cursor: pointer;
+}
+#heard-tips { padding: 8px 12px; max-height: 260px; overflow-y: auto; }
+.heard-tip {
+  background: #f5f3ff;
+  border-left: 3px solid #7c3aed;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #2a2233;
+  transition: opacity 0.8s ease;
+}
+.heard-tip b { color: #db2777; text-transform: capitalize; margin-right: 4px; }
+.heard-tip.fade { opacity: 0; }
