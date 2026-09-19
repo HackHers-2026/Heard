@@ -293,11 +293,6 @@
         font-weight: 800;
       }
 
-      /*
-        DMs should keep the plain title treatment and not show the
-        active button highlight used by the primary nav items.
-      */
-
       .compact-navigation {
         display: grid;
         gap: 6px;
@@ -606,6 +601,44 @@
         border-radius: 18px 4px 18px 18px;
         background: linear-gradient(135deg, var(--magenta), var(--coral-light));
         color: var(--white);
+      }
+
+      /* New selectable chat pills */
+
+      .chat-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 0 28px 15px;
+      }
+
+      .chat-pill {
+        padding: 9px 13px;
+        border: 1px solid rgba(170, 29, 106, 0.18);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.58);
+        color: var(--mauve);
+        font-size: 0.74rem;
+        font-weight: 800;
+        transition:
+          transform 0.2s ease,
+          background 0.2s ease,
+          color 0.2s ease,
+          border-color 0.2s ease;
+      }
+
+      .chat-pill:hover {
+        transform: translateY(-2px);
+        border-color: rgba(170, 29, 106, 0.38);
+        background: rgba(248, 192, 223, 0.38);
+        color: var(--magenta);
+      }
+
+      .chat-pill.selected {
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--magenta), var(--coral-light));
+        color: var(--white);
+        box-shadow: 0 7px 16px rgba(170, 29, 106, 0.18);
       }
 
       .message-form,
@@ -1070,6 +1103,16 @@
           padding: 24px 18px;
         }
 
+        .chat-pills {
+          gap: 6px;
+          padding: 0 18px 13px;
+        }
+
+        .chat-pill {
+          padding: 8px 10px;
+          font-size: 0.68rem;
+        }
+
         .message-form,
         .dm-message-form {
           margin-right: 16px;
@@ -1141,7 +1184,11 @@
         </div>
 
         <!-- Compact navigation shown for Channel and DMs views -->
-        <div class="section-navigation" id="sectionNavigation" style="display: none;">
+        <div
+          class="section-navigation"
+          id="sectionNavigation"
+          style="display: none;"
+        >
           <button class="section-link compact-section-link" data-page="AI Chat">
             <span class="nav-icon">✧</span>
             <span>AI Chat</span>
@@ -1152,9 +1199,11 @@
             <span>Channel</span>
           </button>
 
-          <button class="section-link compact-section-link"
-            data-page="DMs">
-            <span class="nav-icon">♡</span>
+          <button
+            class="section-link compact-section-link"
+            data-page="DMs"
+          >
+            <span class="nav-icon">➤</span>
             <span>DMs</span>
             <span class="notification">3</span>
           </button>
@@ -1222,7 +1271,7 @@
           </button>
 
           <button class="compact-nav-button" data-page="DMs">
-            <span class="nav-icon">♡</span>
+            <span class="nav-icon">➤</span>
             <span>DMs</span>
             <span class="notification">3</span>
           </button>
@@ -1232,7 +1281,7 @@
           <div class="nav-label">Account</div>
 
           <div class="profile-card">
-            <div class="avatar">TA</div>
+            <div class="avatar">AS</div>
 
             <div class="profile-info">
               <div class="profile-name">Alia Stallard</div>
@@ -1277,6 +1326,69 @@
             </div>
           </div>
 
+          <!-- Seven selectable chat pills -->
+          <div
+            class="chat-pills"
+            id="chatPills"
+            aria-label="Chat prompt options"
+          >
+            <button
+              type="button"
+              class="chat-pill"
+              data-prompt="Brainstorm ideas"
+            >
+              ✦ Brainstorm
+            </button>
+
+            <button
+              type="button"
+              class="chat-pill"
+              data-prompt="Summarize this"
+            >
+              ≋ Summarize
+            </button>
+
+            <button
+              type="button"
+              class="chat-pill"
+              data-prompt="Explain this clearly"
+            >
+              ◌ Explain
+            </button>
+
+            <button
+              type="button"
+              class="chat-pill"
+              data-prompt="Help me write this"
+            >
+              Aa Write
+            </button>
+
+            <button
+              type="button"
+              class="chat-pill"
+              data-prompt="Help me make a plan"
+            >
+              ◇ Plan
+            </button>
+
+            <button
+              type="button"
+              class="chat-pill"
+              data-prompt="Research this topic"
+            >
+              ⌕ Research
+            </button>
+
+            <button
+              type="button"
+              class="chat-pill"
+              data-prompt="Help me create something"
+            >
+              ✧ Create
+            </button>
+          </div>
+
           <form class="message-form" id="messageForm">
             <input
               type="text"
@@ -1285,7 +1397,11 @@
               autocomplete="off"
             />
 
-            <button type="submit" class="send-button" aria-label="Send message">
+            <button
+              type="submit"
+              class="send-button"
+              aria-label="Send message"
+            >
               ↑
             </button>
           </form>
@@ -1513,6 +1629,7 @@
       const messageForm = document.getElementById("messageForm");
       const messageInput = document.getElementById("messageInput");
       const newChatButton = document.getElementById("newChatButton");
+      const chatPills = document.querySelectorAll(".chat-pill");
 
       const sectionLinks = document.querySelectorAll(".section-link");
       const compactButtons = document.querySelectorAll(".compact-nav-button");
@@ -1591,10 +1708,10 @@
 
       function updateActiveSection(pageName) {
         sectionLinks.forEach((link) => {
-          const isActive = link.dataset.page === pageName && pageName !== "DMs";
+          const isActive =
+            link.dataset.page === pageName && pageName !== "DMs";
 
           link.classList.toggle("active-section", isActive);
-          link.classList.remove("dm-title-link");
         });
       }
 
@@ -1633,7 +1750,6 @@
 
       function renderAiChat(chatName) {
         chatHeading.textContent = chatName;
-
         messages.innerHTML = "";
 
         const message = document.createElement("div");
@@ -1677,7 +1793,11 @@
         const statusDot = document.createElement("span");
         statusDot.className = "dm-online-dot";
 
-        activeDmStatus.append(statusDot, document.createTextNode(contact.status));
+        activeDmStatus.append(
+          statusDot,
+          document.createTextNode(contact.status)
+        );
+
         dmMessageInput.placeholder = `Message ${userName}...`;
         dmMessages.innerHTML = "";
 
@@ -1717,7 +1837,7 @@
 
         const avatar = document.createElement("div");
         avatar.className = "message-avatar";
-        avatar.textContent = "TA";
+        avatar.textContent = "AS";
 
         const content = document.createElement("div");
         content.className = "message-content";
@@ -1760,9 +1880,15 @@
         dmMessages.appendChild(message);
       }
 
+      function getSelectedPromptText() {
+        return [...document.querySelectorAll(".chat-pill.selected")]
+          .map((pill) => pill.dataset.prompt)
+          .join(", ");
+      }
+
       /* AI Chat history */
 
-      document.querySelectorAll(".chat-item").forEach((chat) => {
+      function attachChatListener(chat) {
         chat.addEventListener("click", () => {
           document
             .querySelectorAll(".chat-item")
@@ -1771,7 +1897,9 @@
           chat.classList.add("active-chat");
           renderAiChat(chat.dataset.chat);
         });
-      });
+      }
+
+      document.querySelectorAll(".chat-item").forEach(attachChatListener);
 
       newChatButton.addEventListener("click", () => {
         const newChat = document.createElement("button");
@@ -1790,29 +1918,49 @@
           .forEach((item) => item.classList.remove("active-chat"));
 
         chatList.prepend(newChat);
+        attachChatListener(newChat);
         renderAiChat("New conversation");
+      });
 
-        newChat.addEventListener("click", () => {
-          document
-            .querySelectorAll(".chat-item")
-            .forEach((item) => item.classList.remove("active-chat"));
+      /* Selectable AI Chat pills */
 
-          newChat.classList.add("active-chat");
-          renderAiChat(newChat.dataset.chat);
+      chatPills.forEach((pill) => {
+        pill.addEventListener("click", () => {
+          pill.classList.toggle("selected");
+
+          const selectedPrompts = getSelectedPromptText();
+
+          messageInput.placeholder = selectedPrompts
+            ? `${selectedPrompts}...`
+            : "Message Heard AI...";
+
+          messageInput.focus();
         });
       });
 
       messageForm.addEventListener("submit", (event) => {
         event.preventDefault();
 
-        const text = messageInput.value.trim();
+        const typedText = messageInput.value.trim();
+        const selectedPrompts = getSelectedPromptText();
 
-        if (!text) {
+        if (!typedText && !selectedPrompts) {
           return;
         }
 
-        addAiUserMessage(text);
+        const finalMessage = selectedPrompts && typedText
+          ? `${selectedPrompts}: ${typedText}`
+          : typedText || selectedPrompts;
+
+        addAiUserMessage(finalMessage);
+
         messageInput.value = "";
+        messageInput.placeholder = "Message Heard AI...";
+
+        chatPills.forEach((pill) => {
+          pill.classList.remove("selected");
+        });
+
         messages.scrollTop = messages.scrollHeight;
       });
 
@@ -1821,6 +1969,7 @@
       sectionLinks.forEach((link) => {
         link.addEventListener("click", () => {
           const selectedPage = link.dataset.page;
+
           updateActiveSection(selectedPage);
 
           if (selectedPage === "AI Chat") {
@@ -1945,7 +2094,7 @@
           post.innerHTML = `
             <div class="post-header">
               <div class="post-user">
-                <div class="post-avatar pink-avatar">TA</div>
+                <div class="post-avatar pink-avatar">AS</div>
 
                 <div>
                   <h2>You</h2>
@@ -1993,16 +2142,18 @@
             event.currentTarget.textContent = "Message opened";
           });
 
-          post.querySelector(".file-action").addEventListener("click", (event) => {
-            const button = event.currentTarget;
-            const originalText = button.textContent;
+          post
+            .querySelector(".file-action")
+            .addEventListener("click", (event) => {
+              const button = event.currentTarget;
+              const originalText = button.textContent;
 
-            button.textContent = "✓";
+              button.textContent = "✓";
 
-            window.setTimeout(() => {
-              button.textContent = originalText;
-            }, 1200);
-          });
+              window.setTimeout(() => {
+                button.textContent = originalText;
+              }, 1200);
+            });
         });
 
       /* Initial state */
