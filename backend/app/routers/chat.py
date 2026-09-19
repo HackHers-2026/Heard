@@ -39,6 +39,7 @@ def post_chat(
 def get_chat(
     speech_id: str,
     phase: Optional[str] = None,
+    limit: Optional[int] = None,
     session: Session = Depends(get_session),
     user=Depends(get_current_user),
 ):
@@ -53,6 +54,11 @@ def get_chat(
     q = q.order_by(ChatMessage.created_at)
 
     messages = session.exec(q).all()
+
+    # limit=3 → last 3 exchanges = last 6 rows (user + model per exchange)
+    if limit is not None:
+        messages = messages[-(limit * 2):]
+
     return {
         "messages": [
             {

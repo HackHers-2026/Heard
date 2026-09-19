@@ -6,6 +6,7 @@ from typing import Optional
 from app.database import get_session
 from app.dependencies import get_current_user
 from app.models import CommunityPost, Like
+from app.services import tigertable
 
 router = APIRouter(prefix="/api", tags=["feed"])
 
@@ -90,4 +91,12 @@ def toggle_like(post_id: str, user=Depends(get_current_user), session: Session =
 
     session.add(post)
     session.commit()
+
+    if liked:
+        tigertable.track("post.liked", {
+            "post_id": post_id,
+            "user_id": user.id,
+            "career_tag": post.career_tag,
+        })
+
     return {"liked": liked, "like_count": post.like_count}

@@ -234,4 +234,7 @@ __marimo__/
 
 #personal
 documents/
-.gitignore.mcp.json
+.mcp.json
+
+# frontend — handled separately
+web/

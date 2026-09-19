@@ -7,6 +7,7 @@ from functools import lru_cache
 from sqlmodel import Session, select
 
 from app.models import ChatMessage, RealtimeSegment, Speech, SpeechMetrics
+from app.services import tigertable
 
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -293,11 +294,12 @@ def _stub_summary(text: str) -> str:
 
 def _save_metrics(speech_id, session, clarity, volume, pace,
                   confidence, structure, summary, suggestions):
+    overall = (clarity + volume + pace + confidence + structure) // 5
     metrics = SpeechMetrics(
         speech_id=speech_id,
         clarity=clarity, volume=volume, pace=pace,
         confidence=confidence, structure=structure,
-        overall=(clarity + volume + pace + confidence + structure) // 5,
+        overall=overall,
         summary=summary,
         suggestions=suggestions,
     )
@@ -307,3 +309,14 @@ def _save_metrics(speech_id, session, clarity, volume, pace,
         speech.status = "done"
         session.add(speech)
     session.commit()
+
+    tigertable.track("speech.ended", {
+        "speech_id": speech_id,
+        "user_id": speech.user_id if speech else None,
+        "overall": overall,
+        "clarity": clarity,
+        "volume": volume,
+        "pace": pace,
+        "confidence": confidence,
+        "structure": structure,
+    })

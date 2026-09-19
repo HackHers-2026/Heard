@@ -9,6 +9,7 @@ from app.database import engine as db_engine
 from app.dependencies import get_current_user
 from app.models import Speech, RealtimeSegment, SpeechMetrics
 from app.services import gemini
+from app.services import tigertable
 
 router = APIRouter(prefix="/api/speech", tags=["speech"])
 
@@ -52,6 +53,13 @@ def speech_segment(body: SegmentRequest, session: Session = Depends(get_session)
     )
     session.add(seg)
     session.commit()
+
+    tigertable.track("segment.posted", {
+        "speech_id": body.speech_id,
+        "pace_wpm": pace_wpm,
+        "avg_volume": body.avg_volume,
+    })
+
     return {"nudge": nudge}
 
 
