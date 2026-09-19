@@ -1,8 +1,10 @@
 # Heard
 
-**Empowering women to be heard.** Heard helps women build confidence in
-speaking up — rehearse a pitch over your Google Slides, get warm, real-time AI
-coaching, then track your growth and learn from women who've been where you are.
+Women have brilliant ideas. Too often, they go unspoken.
+
+**Heard** is a tool that helps women practice speaking up — with encouragement
+before they start, real-time coaching while they speak, and a community to
+grow with after.
 
 > Built for the **developHer** track @ Hackhers 2026 — empowering women through
 > education, career growth, and meaningful connections.
