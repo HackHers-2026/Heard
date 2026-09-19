@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -5,7 +6,7 @@ from functools import lru_cache
 
 from sqlmodel import Session, select
 
-from app.models import RealtimeSegment, Speech, SpeechMetrics
+from app.models import ChatMessage, RealtimeSegment, Speech, SpeechMetrics
 
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -201,6 +202,91 @@ def _range_score(val: float, low: float, ideal_low: float,
     if val >= high:
         return 20
     return int(100 - 80 * (val - ideal_high) / (high - ideal_high))
+
+
+# ── Chat (phased, with memory) ────────────────────────────────────────────────
+
+_PHASE_CONTEXT = {
+    "preptalk":    "You are a warm speech coach helping the user prepare. Be encouraging and specific.",
+    "activetalk":  "You are a real-time coach. Be terse — one nudge, 15 words max.",
+    "talksummary": "You are a reflective coach reviewing a completed speech. Be growth-focused and kind.",
+}
+
+_PHASE_STUBS = {
+    "preptalk":    "You're ready — start strong and own the room.",
+    "activetalk":  "Slow down slightly, you're doing great.",
+    "talksummary": "Strong structure. Work on reducing filler words next time.",
+}
+
+
+def make_session_hash(speech_id: str) -> str:
+    return hashlib.sha256(speech_id.encode()).hexdigest()[:16]
+
+
+def chat(speech_id: str, message: str, phase: str, session: Session) -> dict:
+    session_hash = make_session_hash(speech_id)
+
+    raw = session.exec(
+        select(ChatMessage)
+        .where(ChatMessage.session_hash == session_hash)
+        .order_by(ChatMessage.created_at)
+    ).all()
+    # last 10 rows = last 5 exchanges
+    history = [
+        {"role": r.role, "parts": [r.content]}
+        for r in raw[-10:]
+    ]
+
+    if _stub_mode():
+        reply = _PHASE_STUBS.get(phase, "Keep going, you've got this.")
+        summary = _stub_summary(message)
+    else:
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=GEMINI_KEY)
+            model = genai.GenerativeModel(
+                "gemini-1.5-flash",
+                system_instruction=_PHASE_CONTEXT.get(phase, _PHASE_CONTEXT["preptalk"]),
+            )
+            chat_session = model.start_chat(history=history)
+            reply = chat_session.send_message(message).text.strip()
+            summary = _generate_summary(message, reply)
+        except Exception:
+            reply = _PHASE_STUBS.get(phase, "Keep going, you've got this.")
+            summary = _stub_summary(message)
+
+    for role, content in [("user", message), ("model", reply)]:
+        session.add(ChatMessage(
+            session_hash=session_hash,
+            speech_id=speech_id,
+            role=role,
+            phase=phase,
+            content=content,
+            summary=summary,
+        ))
+    session.commit()
+
+    return {"reply": reply, "phase": phase, "summary": summary}
+
+
+def _generate_summary(user_msg: str, model_reply: str) -> str:
+    if _stub_mode():
+        return _stub_summary(user_msg)
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=GEMINI_KEY)
+        model = genai.GenerativeModel("gemini-1.5-flash-8b")
+        prompt = (
+            f'User: "{user_msg[:100]}"\nReply: "{model_reply[:100]}"\n'
+            "Summarise this exchange in 3-5 words. No punctuation. Lowercase."
+        )
+        return model.generate_content(prompt).text.strip()[:40]
+    except Exception:
+        return _stub_summary(user_msg)
+
+
+def _stub_summary(text: str) -> str:
+    return " ".join(text.split()[:4]).lower().rstrip("?.!")
 
 
 # ── Shared save helper ────────────────────────────────────────────────────────
