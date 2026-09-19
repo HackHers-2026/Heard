@@ -15,6 +15,7 @@ from sqlmodel import Session
 from app.database import engine
 from app.dependencies import authenticate_token
 from app.services import elevenlabs
+from app.services.coaching import CoachingWorker
 from app.services.segmenter import SpeechSegmenter
 
 router = APIRouter(tags=["stt"])
@@ -63,6 +64,19 @@ async def stt_ws(websocket: WebSocket):
         }
     )
 
+    async def push(payload: dict) -> None:
+        try:
+            await websocket.send_json(payload)
+        except Exception:
+            pass
+
+    # One coaching worker per session: each 60s segment → Backboard (memory +
+    # thread) → Gemini → structured feedback, pushed back over this socket. The
+    # worker processes segments strictly in order (minute 1 → 2 → 3).
+    coach = CoachingWorker(user_id=segmenter.user_id, speech_id=segmenter.speech_id, send=push)
+    await coach.start()
+    segmenter.on_segment = coach.enqueue
+
     async def on_transcript(text: str, is_final: bool) -> None:
         # Only finalized (committed) text becomes part of a stored segment.
         if is_final:
@@ -73,5 +87,6 @@ async def stt_ws(websocket: WebSocket):
         await elevenlabs.proxy_realtime_stt(websocket, on_transcript=on_transcript)
     finally:
         flush_task.cancel()
-        await segmenter.flush_remaining()  # persist the final partial minute
+        await segmenter.flush_remaining()  # persist + coach the final partial minute
         segmenter.end()                    # mark the session finished
+        await coach.finalize()             # drain queue, then extract session memories

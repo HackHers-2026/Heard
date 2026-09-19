@@ -29,9 +29,15 @@ class Settings(BaseSettings):
     elevenlabs_realtime_model: str = "scribe_v2_realtime"
     elevenlabs_stt_ws_url: str = "wss://api.elevenlabs.io/v1/speech-to-text/realtime"
 
-    # Backboard (memory)
+    # Backboard (stateful coaching layer around Gemini)
     backboard_api_key: str = ""
-    backboard_base_url: str = "https://api.backboard.io"
+    # Current Backboard API base URL (used by the raw-HTTP helpers; the SDK
+    # manages its own base URL internally).
+    backboard_base_url: str = "https://app.backboard.io/api"
+    # Which Google/Gemini model Backboard routes coaching through. Query the
+    # live list with `GET /models/provider/google` (see backboard.list_google_models)
+    # and override via BACKBOARD_GOOGLE_MODEL in .env.
+    backboard_google_model: str = "gemini-2.5-flash"
 
     # TigerTable
     tigertable_api_key: str = ""
