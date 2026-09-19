@@ -230,3 +230,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+#personal
+documents/
+.gitignore.mcp.json

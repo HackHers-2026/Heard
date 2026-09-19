@@ -1,22 +1,9 @@
-"""Heard backend — one API serving both frontends (web app + Chrome extension).
-
-Run locally:
-    cd backend
-    python -m venv .venv && .venv\\Scripts\\activate   # (Windows)
-    pip install -r requirements.txt
-    cp .env.example .env   # then fill in keys
-    uvicorn app.main:app --reload
-
-Interactive docs: http://localhost:8000/docs
-"""
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import settings
 from app.database import init_db
-from app.routers import auth, feedback, leaderboard, messages, sessions, training
+from app.routers import encourage, speech, feed, profile, mentor
 
 
 @asynccontextmanager
@@ -34,20 +21,19 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(sessions.router)
-app.include_router(feedback.router)
-app.include_router(leaderboard.router)
-app.include_router(messages.router)
-app.include_router(training.router)
+app.include_router(encourage.router)
+app.include_router(speech.router)
+app.include_router(feed.router)
+app.include_router(profile.router)
+app.include_router(mentor.router)
 
 
 @app.get("/health", tags=["meta"])
 def health():
-    return {"status": "ok", "service": "heard-api"}
+    return {"status": "ok"}
