@@ -16,8 +16,9 @@ def test_invalid_token_returns_401():
 
 
 def test_valid_token_creates_user_on_first_login():
-    payload = {"sub": "supabase-uid-auth-test", "email": "test@example.com"}
-    with patch("app.dependencies.jwt.decode", return_value=payload):
+    # Mock the Supabase Auth server response (GET /auth/v1/user).
+    supabase_user = {"id": "supabase-uid-auth-test", "email": "test@example.com"}
+    with patch("app.dependencies._fetch_supabase_user", return_value=supabase_user):
         r = client.post("/api/speech/start", headers={"Authorization": "Bearer fake"})
         assert r.status_code == 200
         data = r.json()

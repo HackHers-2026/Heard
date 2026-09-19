@@ -50,7 +50,8 @@ async def stt_ws(websocket: WebSocket):
     await websocket.accept()
 
     # Attribute the session to the signed-in user when a valid token is present.
-    user_id = _resolve_user_id(websocket)
+    # Token validation hits the Supabase Auth server, so run it off the event loop.
+    user_id = await asyncio.to_thread(_resolve_user_id, websocket)
 
     # One recording == one Speech (session). All segments share this id.
     segmenter = SpeechSegmenter(user_id=user_id)

@@ -1,5 +1,6 @@
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { clearToken, getToken } from "./api";
+import { supabase } from "./supabase";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import SessionChat from "./pages/SessionChat";
@@ -15,6 +16,15 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 
 function Nav() {
   if (!getToken()) return null;
+
+  async function logout() {
+    // Sign out of Supabase too — the extension bridge watches the Supabase
+    // session, so clearing only heard_token would leave the user "signed in".
+    await supabase.auth.signOut();
+    clearToken();
+    location.href = "/login";
+  }
+
   return (
     <nav className="nav">
       <Link to="/" className="brand">Heard</Link>
@@ -23,7 +33,7 @@ function Nav() {
         <Link to="/train">Pre-Training</Link>
         <Link to="/leaderboard">Leaderboard</Link>
         <Link to="/messages">Messages</Link>
-        <button onClick={() => { clearToken(); location.href = "/login"; }}>Log out</button>
+        <button onClick={logout}>Log out</button>
       </div>
     </nav>
   );

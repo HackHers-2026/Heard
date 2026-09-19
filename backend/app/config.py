@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./heard.db"
     cors_origins: str = "http://localhost:5173"
 
+    # Supabase (validate user tokens via the Auth server — no legacy JWT secret needed)
+    supabase_url: str = ""
+    supabase_publishable_key: str = ""
+
     # Gemini
     gemini_api_key: str = ""
     gemini_model: str = "gemini-1.5-flash"

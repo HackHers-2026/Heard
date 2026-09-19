@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, setToken, type Domain } from "../api";
+import { supabase } from "../supabase";
+import { setToken, type Domain } from "../api";
 
 export default function Login() {
   const nav = useNavigate();
@@ -15,14 +16,31 @@ export default function Login() {
     e.preventDefault();
     setError("");
     try {
-      const res =
-        mode === "login"
-          ? await api.login(email, password)
-          : await api.signup({ email, password, display_name: displayName, domain });
-      setToken(res.access_token);
-      nav("/");
+      if (mode === "login") {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        if (data.session) setToken(data.session.access_token);
+        nav("/");
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              display_name: displayName,
+              domain,
+            },
+          },
+        });
+        if (error) throw error;
+        if (data.session) setToken(data.session.access_token);
+        nav("/");
+      }
     } catch (err) {
-      setError(String(err));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
