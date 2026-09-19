@@ -5,14 +5,17 @@ shared by every `RealtimeSegment` produced during that recording. Committed
 (finalized) transcript text is buffered and flushed to a `RealtimeSegment` once
 per minute, with an incrementing `segment_index`.
 
-Gemini is intentionally NOT called here yet — that hooks in later (e.g. set the
-segment's `nudge`/feed it to scoring). For now this only persists transcripts.
+After each segment is persisted the segmenter invokes an optional async
+`on_segment(segment_id, transcript, segment_index)` callback — the coaching
+worker uses this to enqueue the minute for Backboard/Gemini analysis without
+blocking transcription.
 """
 from __future__ import annotations
 
 import asyncio
 import time
 from datetime import datetime
+from typing import Awaitable, Callable, Optional
 
 from sqlmodel import Session
 
@@ -46,6 +49,10 @@ class SpeechSegmenter:
         seg.end()                        # mark the Speech finished
     """
 
+    # async callback(segment_id, transcript, segment_index) fired after each
+    # segment is persisted; set by the caller (e.g. the coaching worker).
+    OnSegment = Callable[[str, str, int], Awaitable[None]]
+
     def __init__(self, user_id: str | None = None, segment_seconds: int = SEGMENT_SECONDS):
         self.segment_seconds = segment_seconds
         self._buffer: list[str] = []
@@ -53,6 +60,7 @@ class SpeechSegmenter:
         self._lock = asyncio.Lock()
         self._window_start = time.monotonic()
         self._window_started_iso = datetime.utcnow().isoformat()
+        self.on_segment: Optional["SpeechSegmenter.OnSegment"] = None
 
         # Create the session (Speech) row up front.
         with Session(engine) as session:
@@ -62,6 +70,7 @@ class SpeechSegmenter:
             session.commit()
             session.refresh(speech)
             self.speech_id = speech.id
+            self.user_id = uid
 
     async def add_committed(self, text: str) -> None:
         """Buffer one finalized (committed) transcript chunk."""
@@ -71,36 +80,50 @@ class SpeechSegmenter:
 
     async def force_flush(self) -> None:
         """Called every `segment_seconds`: write a segment if we have text."""
+        info = None
         async with self._lock:
             if self._buffer:
-                self._write_segment()
+                info = self._write_segment()
             else:
                 # A silent minute — keep the 1-minute cadence aligned.
                 self._reset_window()
+        await self._notify(info)
 
     async def flush_remaining(self) -> None:
         """Write whatever is left when the recording stops."""
+        info = None
         async with self._lock:
             if self._buffer:
-                self._write_segment()
+                info = self._write_segment()
+        await self._notify(info)
+
+    async def _notify(self, info: tuple[str, str, int] | None) -> None:
+        """Hand a freshly persisted segment to the coaching callback, if set.
+        Runs outside the lock so slow AI work never stalls transcription."""
+        if info and self.on_segment:
+            await self.on_segment(*info)
 
     # -- internal (call while holding the lock) --
-    def _write_segment(self) -> None:
+    def _write_segment(self) -> tuple[str, str, int]:
+        """Persist the buffered minute; return (segment_id, transcript, index)."""
         transcript = " ".join(self._buffer).strip()
         duration = round(time.monotonic() - self._window_start, 2)
+        index = self.segment_index
         with Session(engine) as session:
-            session.add(
-                RealtimeSegment(
-                    speech_id=self.speech_id,
-                    transcript=transcript,
-                    segment_index=self.segment_index,
-                    recorded_at=self._window_started_iso,
-                    duration_seconds=duration,
-                )
+            segment = RealtimeSegment(
+                speech_id=self.speech_id,
+                transcript=transcript,
+                segment_index=index,
+                recorded_at=self._window_started_iso,
+                duration_seconds=duration,
             )
+            session.add(segment)
             session.commit()
+            session.refresh(segment)
+            segment_id = segment.id
         self.segment_index += 1
         self._reset_window()
+        return segment_id, transcript, index
 
     def _reset_window(self) -> None:
         self._buffer = []

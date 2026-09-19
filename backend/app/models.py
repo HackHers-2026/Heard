@@ -12,6 +12,9 @@ class User(SQLModel, table=True):
     career_tag: Optional[str] = None
     is_mentor: bool = False
     created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    # Backboard assistant = this user's persistent long-term speaking coach.
+    # One per Heard user so coaching memories are never mixed between users.
+    backboard_assistant_id: Optional[str] = None
 
 
 class Speech(SQLModel, table=True):
@@ -20,6 +23,9 @@ class Speech(SQLModel, table=True):
     status: str = "live"
     started_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     ended_at: Optional[str] = None
+    # Backboard thread = this one practice/presentation session. Each 60s
+    # RealtimeSegment becomes one message in this thread.
+    backboard_thread_id: Optional[str] = None
 
 
 class SpeechMetrics(SQLModel, table=True):
@@ -40,12 +46,15 @@ class RealtimeSegment(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     speech_id: str = Field(foreign_key="speech.id")
     transcript: str
-    nudge: str = ""
+    nudge: str = ""                         # short live recommendation shown in the sidebar
     segment_index: int
     recorded_at: str
     duration_seconds: float
     avg_volume: int = 0
     volume_variance: int = 0
+    # Full structured coaching payload from Backboard/Gemini (focus_area,
+    # evidence, progress, next_minute_goal, scores). Sidebar shows only `nudge`.
+    feedback_json: str = "{}"
 
 
 class CommunityPost(SQLModel, table=True):
