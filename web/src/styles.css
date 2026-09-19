@@ -91,3 +91,12 @@ button.link { background: none; color: var(--brand); padding: 8px 0; }
 
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .summary h4 { margin-bottom: 4px; }
+
+button.ghost { background: var(--brand-soft); color: var(--brand); }
+
+.bars { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+.bar-row { display: grid; grid-template-columns: 90px 1fr 36px; align-items: center; gap: 10px; }
+.bar-label { text-transform: capitalize; font-size: 13px; color: var(--muted); }
+.bar-track { background: var(--brand-soft); border-radius: 999px; height: 10px; overflow: hidden; }
+.bar-fill { background: var(--brand); height: 100%; border-radius: 999px; transition: width 0.3s; }
+.bar-val { font-weight: 700; font-size: 13px; text-align: right; }

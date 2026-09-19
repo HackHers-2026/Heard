@@ -1,65 +1,183 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../api";
+import { api, Phase } from "../api";
 
-// The transcript + AI feedback rendered as a chat with the coach, plus a
-// button to generate the final summary + score.
+// The AI coach chat for a speech session + the final report (metrics + summary).
+// The Chrome extension streams live nudges into the same speech; here the user
+// can talk to the coach (preptalk/talksummary) and generate the post-speech report.
 export default function SessionChat() {
   const { id } = useParams();
-  const sessionId = Number(id);
-  const [feedback, setFeedback] = useState<any[]>([]);
-  const [summary, setSummary] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const speechId = id as string;
 
-  async function load() {
-    setFeedback(await api.sessionFeedback(sessionId));
+  const [phase, setPhase] = useState<Phase>("preptalk");
+  const [messages, setMessages] = useState<any[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [report, setReport] = useState<any>(null);
+  const [finishing, setFinishing] = useState(false);
+  const [error, setError] = useState("");
+  const [mentorStatus, setMentorStatus] = useState("");
+  const pollRef = useRef<number | null>(null);
+
+  async function loadThread() {
+    try {
+      const res = await api.getChat(speechId);
+      setMessages(res.messages ?? []);
+    } catch (err) {
+      setError(String(err));
+    }
   }
-  useEffect(() => { load(); }, [sessionId]);
+  useEffect(() => {
+    loadThread();
+    return () => {
+      if (pollRef.current) window.clearInterval(pollRef.current);
+    };
+  }, [speechId]);
+
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setSending(true);
+    setError("");
+    try {
+      await api.postChat(speechId, input.trim(), phase);
+      setInput("");
+      await loadThread();
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setSending(false);
+    }
+  }
 
   async function finish() {
-    setLoading(true);
+    setFinishing(true);
+    setError("");
     try {
-      setSummary(await api.summarize(sessionId));
-      await load();
+      const { report_ready } = await api.endSpeech(speechId);
+      setPhase("talksummary");
+      if (report_ready) {
+        setReport(await api.report(speechId));
+      } else {
+        // report is generated async — poll a few times
+        pollRef.current = window.setInterval(async () => {
+          try {
+            const r = await api.report(speechId);
+            if (r?.metrics) {
+              setReport(r);
+              if (pollRef.current) window.clearInterval(pollRef.current);
+            }
+          } catch {
+            /* keep polling */
+          }
+        }, 3000);
+      }
+    } catch (err) {
+      setError(String(err));
     } finally {
-      setLoading(false);
+      setFinishing(false);
+    }
+  }
+
+  async function connectMentor(mentorId: string) {
+    setMentorStatus("");
+    try {
+      const res = await api.mentorConnect(mentorId, speechId);
+      setMentorStatus(`Request sent (${res.connection?.status ?? "pending"})`);
+    } catch (err) {
+      setMentorStatus(String(err));
     }
   }
 
   return (
     <div>
-      <h2>Practice #{sessionId}</h2>
+      <h2>Practice session</h2>
+      <p className="muted">Speech ID: {speechId}</p>
+
+      <div className="tabs">
+        {(["preptalk", "activetalk", "talksummary"] as Phase[]).map((p) => (
+          <button key={p} className={phase === p ? "active" : ""} onClick={() => setPhase(p)}>
+            {p}
+          </button>
+        ))}
+      </div>
+
       <div className="chat">
-        {feedback.length === 0 && <p className="muted">No feedback captured yet. Practice with the extension to populate this chat.</p>}
-        {feedback.map((f) => (
-          <div key={f.id} className={`bubble ${f.kind}`}>
-            {f.trigger_text && <p className="trigger">You said: “{f.trigger_text}”</p>}
-            <p>{f.content}</p>
-            {f.score != null && <span className="badge">Score: {f.score}/100</span>}
+        {messages.length === 0 && (
+          <p className="muted">No messages yet. Talk to your coach below, or start recording in the extension.</p>
+        )}
+        {messages.map((m, i) => (
+          <div key={i} className={`bubble ${m.role === "model" ? "summary" : ""}`}>
+            <p>{m.content}</p>
+            {m.summary && <span className="badge">{m.summary}</span>}
           </div>
         ))}
       </div>
 
-      <button onClick={finish} disabled={loading}>
-        {loading ? "Scoring…" : "Finish & get my score"}
+      <form onSubmit={send} className="row">
+        <input
+          placeholder={`Message the coach (${phase})…`}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+        <button type="submit" disabled={sending}>
+          {sending ? "…" : "Send"}
+        </button>
+      </form>
+
+      {error && <p className="error">{error}</p>}
+
+      <button onClick={finish} disabled={finishing} style={{ marginTop: 16 }}>
+        {finishing ? "Generating…" : "Finish & get my report"}
       </button>
 
-      {summary && (
+      {report?.metrics && (
         <div className="card summary">
-          <h3>Summary — {summary.score}/100</h3>
-          <p>{summary.summary}</p>
-          <div className="cols">
-            <div>
-              <h4>Strengths</h4>
-              <ul>{summary.strengths.map((s: string, i: number) => <li key={i}>{s}</li>)}</ul>
-            </div>
-            <div>
+          <h3>Report — {report.metrics.overall}/100</h3>
+          <p>{report.metrics.summary}</p>
+          <MetricBars metrics={report.metrics} />
+          {report.metrics.suggestions?.length > 0 && (
+            <>
               <h4>Work on</h4>
-              <ul>{summary.improvements.map((s: string, i: number) => <li key={i}>{s}</li>)}</ul>
-            </div>
-          </div>
+              <ul>
+                {report.metrics.suggestions.map((s: string, i: number) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          {report.metrics.mentor_suggestions?.length > 0 && (
+            <>
+              <h4>Connect with a mentor</h4>
+              <div className="row">
+                {report.metrics.mentor_suggestions.map((mid: string) => (
+                  <button key={mid} className="ghost" onClick={() => connectMentor(mid)}>
+                    Request {mid.slice(0, 8)}…
+                  </button>
+                ))}
+              </div>
+              {mentorStatus && <p className="muted">{mentorStatus}</p>}
+            </>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function MetricBars({ metrics }: { metrics: any }) {
+  const keys = ["clarity", "volume", "pace", "confidence", "structure"];
+  return (
+    <div className="bars">
+      {keys.map((k) => (
+        <div key={k} className="bar-row">
+          <span className="bar-label">{k}</span>
+          <div className="bar-track">
+            <div className="bar-fill" style={{ width: `${metrics[k] ?? 0}%` }} />
+          </div>
+          <span className="bar-val">{metrics[k] ?? 0}</span>
+        </div>
+      ))}
     </div>
   );
 }

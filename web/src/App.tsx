@@ -4,8 +4,8 @@ import { supabase } from "./supabase";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import SessionChat from "./pages/SessionChat";
-import Leaderboard from "./pages/Leaderboard";
-import Messages from "./pages/Messages";
+import Feed from "./pages/Feed";
+import Profile from "./pages/Profile";
 import PreTraining from "./pages/PreTraining";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
@@ -31,8 +31,8 @@ function Nav() {
       <div className="nav-links">
         <Link to="/">Dashboard</Link>
         <Link to="/train">Pre-Training</Link>
-        <Link to="/leaderboard">Leaderboard</Link>
-        <Link to="/messages">Messages</Link>
+        <Link to="/feed">Feed</Link>
+        <Link to="/profile">Profile</Link>
         <button onClick={logout}>Log out</button>
       </div>
     </nav>
@@ -49,8 +49,8 @@ export default function App() {
           <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/session/:id" element={<RequireAuth><SessionChat /></RequireAuth>} />
           <Route path="/train" element={<RequireAuth><PreTraining /></RequireAuth>} />
-          <Route path="/leaderboard" element={<RequireAuth><Leaderboard /></RequireAuth>} />
-          <Route path="/messages" element={<RequireAuth><Messages /></RequireAuth>} />
+          <Route path="/feed" element={<RequireAuth><Feed /></RequireAuth>} />
+          <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
         </Routes>
       </main>
     </>

@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 // Proxy /api -> FastAPI backend during dev so there are no CORS surprises.
+// NOTE: the backend routes are literally prefixed with /api (e.g. /api/speech/start),
+// so we must NOT strip /api here.
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -10,7 +12,6 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:8000",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
   },

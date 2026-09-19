@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
-import { setToken, type Domain } from "../api";
+import { setToken, type CareerTag } from "../api";
 
 export default function Login() {
   const nav = useNavigate();
@@ -9,7 +9,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [domain, setDomain] = useState<Domain>("tech");
+  const [careerTag, setCareerTag] = useState<CareerTag>("engineering");
   const [error, setError] = useState("");
 
   async function submit(e: React.FormEvent) {
@@ -31,7 +31,7 @@ export default function Login() {
           options: {
             data: {
               display_name: displayName,
-              domain,
+              career_tag: careerTag,
             },
           },
         });
@@ -55,8 +55,8 @@ export default function Login() {
         <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         {mode === "signup" && (
-          <select value={domain} onChange={(e) => setDomain(e.target.value as Domain)}>
-            <option value="tech">Tech</option>
+          <select value={careerTag} onChange={(e) => setCareerTag(e.target.value as CareerTag)}>
+            <option value="engineering">Engineering</option>
             <option value="law">Law</option>
             <option value="finance">Finance</option>
             <option value="marketing">Marketing</option>
