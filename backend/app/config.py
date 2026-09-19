@@ -17,6 +17,12 @@ class Settings(BaseSettings):
     # Supabase (validate user tokens via the Auth server — no legacy JWT secret needed)
     supabase_url: str = ""
     supabase_publishable_key: str = ""
+    # Anon/publishable key used for the auth proxy (signup/login). Falls back to
+    # the publishable key when unset.
+    supabase_anon_key: str = ""
+    # Service-role key for privileged server-side operations. Optional: the
+    # FastAPI backend enforces ownership in code regardless of RLS.
+    supabase_service_key: str = ""
 
     # Gemini
     gemini_api_key: str = ""

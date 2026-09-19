@@ -42,9 +42,111 @@ from sqlmodel import Session, select
 
 from app.config import settings
 from app.database import engine
-from app.models import Speech, SpeechMetrics, User
+from app.models import Speech, SpeechMetrics, User, Profile
 
 logger = logging.getLogger("heard.backboard")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# General longitudinal coach (Heard v2) — one stable assistant per user.
+#
+# Distinct from the live-segment coach above: this assistant powers pre-training
+# chat, post-training analysis, and post-training follow-up. Its system prompt is
+# a general communication-coach persona; each call carries the explicit, Supabase-
+# sourced evidence packet so behavior never depends on hidden memory alone.
+# ─────────────────────────────────────────────────────────────────────────────
+
+GENERAL_COACH_SYSTEM_PROMPT = """\
+You are Heard, a longitudinal communication coach powered by objective speech
+measurements plus the user's own speaking history.
+
+You are NOT a generic public-speaking chatbot. Ground everything in the evidence
+and history provided in each message. Prefer "In your previous Technology
+session..." over "Speakers often...". Never invent audio characteristics, past
+events, or metrics that were not supplied. You analyze measurements extracted
+from audio — you do not hear the user. Do not infer emotion, personality,
+anxiety, intelligence, or competence.
+
+When a message asks for JSON output, reply with ONLY valid JSON matching the
+requested schema — no prose, no code fences."""
+
+
+async def ensure_coach_assistant(user_id: str) -> str | None:
+    """Return this user's general coach assistant id (Profile.backboard_assistant_id).
+
+    Creates it on first use. Returns None in stub mode so callers fall back to
+    deterministic coaching.
+    """
+    client = _client()
+    if client is None:
+        return None
+
+    with Session(engine) as session:
+        profile = session.get(Profile, user_id)
+        if profile and profile.backboard_assistant_id:
+            return profile.backboard_assistant_id
+
+    try:
+        assistant = await client.create_assistant(
+            name=f"heard-coach-v2-{user_id}",
+            system_prompt=GENERAL_COACH_SYSTEM_PROMPT,
+            custom_fact_extraction_prompt=FACT_EXTRACTION_PROMPT,
+            custom_update_memory_prompt=UPDATE_MEMORY_PROMPT,
+            tools=[PERFORMANCE_TOOL],
+        )
+    except Exception:
+        logger.exception("failed to create v2 coach assistant for %s", user_id)
+        return None
+
+    assistant_id = getattr(assistant, "assistant_id", None)
+    if not assistant_id:
+        return None
+
+    with Session(engine) as session:
+        profile = session.get(Profile, user_id)
+        if profile:
+            profile.backboard_assistant_id = assistant_id
+            session.add(profile)
+            session.commit()
+    return assistant_id
+
+
+async def generate(
+    user_id: str,
+    assistant_id: str | None,
+    thread_id: str | None,
+    message: str,
+    *,
+    memory: str = "Readonly",
+) -> tuple[str, str | None]:
+    """Send one message through Backboard→Gemini; return (content, thread_id).
+
+    Reuses the assistant's persistent thread when ``thread_id`` is provided, so
+    Backboard supplies conversation state while Supabase remains canonical.
+    """
+    client = _client()
+    if client is None or assistant_id is None:
+        return "", thread_id
+
+    kwargs: dict = {
+        "llm_provider": "google",
+        "model_name": settings.backboard_google_model,
+        "memory": memory,
+        "stream": False,
+    }
+    if thread_id:
+        kwargs["thread_id"] = thread_id
+    else:
+        kwargs["assistant_id"] = assistant_id
+
+    try:
+        response = await client.send_message(message, **kwargs)
+        thread_id = getattr(response, "thread_id", None) or thread_id
+        response = await _resolve_tool_calls(client, response, thread_id, user_id)
+        return (getattr(response, "content", "") or ""), thread_id
+    except Exception:
+        logger.exception("Backboard generate failed for %s", user_id)
+        return "", thread_id
 
 
 # ─────────────────────────────────────────────────────────────────────────────

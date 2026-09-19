@@ -15,6 +15,23 @@ _SQLITE_ADDED_COLUMNS = {
     "user": [("backboard_assistant_id", "VARCHAR")],
     "speech": [("backboard_thread_id", "VARCHAR")],
     "realtimesegment": [("feedback_json", "VARCHAR DEFAULT '{}'")],
+    # Heard v2 additions (forward-only; new installs get these from create_all).
+    "profiles": [("backboard_assistant_id", "VARCHAR")],
+    "chat_threads": [("backboard_thread_id", "VARCHAR")],
+    "session_feedback": [
+        ("conciseness_score", "FLOAT"),
+        ("unavailable_dimensions", "VARCHAR DEFAULT '[]'"),
+        ("metrics_summary", "VARCHAR DEFAULT '{}'"),
+        ("longitudinal_analysis", "VARCHAR DEFAULT '{}'"),
+        ("strongest_moments", "VARCHAR DEFAULT '[]'"),
+        ("priority_moments", "VARCHAR DEFAULT '[]'"),
+        ("persistent_patterns", "VARCHAR DEFAULT '[]'"),
+        ("new_patterns", "VARCHAR DEFAULT '[]'"),
+        ("stable_strengths", "VARCHAR DEFAULT '[]'"),
+        ("next_session_goals", "VARCHAR DEFAULT '[]'"),
+        ("metrics_interpretation", "VARCHAR DEFAULT '{}'"),
+        ("vocal_variety", "VARCHAR DEFAULT '{}'"),
+    ],
 }
 
 

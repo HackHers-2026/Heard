@@ -60,6 +60,10 @@ def upsert_user_from_supabase(su: dict, session: Session) -> User:
         session.add(user)
         session.commit()
         session.refresh(user)
+
+    # Ensure the v2 public Profile row exists for channels/leaderboard/DMs.
+    from app.services.profiles import ensure_profile
+    ensure_profile(sub, session, display_name=name, email=email, avatar_url=su.get("user_metadata", {}).get("avatar_url"))
     return user
 
 
