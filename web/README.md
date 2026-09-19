@@ -1,23 +1,31 @@
-# Heard — Web App (React + Vite + TypeScript)
+# Heard web app
 
-The dashboard frontend: review past practices, read the AI "chat" for each run,
-see your score + summary, climb the per-domain leaderboard, and DM mentors.
+React, Vite, and TypeScript frontend for Heard’s communication-training workspace.
 
-## Run
+## Run locally
 
 ```bash
 cd web
 npm install
-npm run dev   # http://localhost:5173
+npm run dev
 ```
 
-Requires the backend running on `http://localhost:8000` (the dev server proxies
-`/api/*` there — see `vite.config.ts`).
+The Vite development server proxies `/api/*` to `http://localhost:8000`. Set
+`VITE_API_BASE_URL` when the FastAPI service is hosted elsewhere.
 
-## Pages
-- `Login` — signup/login (JWT stored in localStorage)
-- `Dashboard` — start runs, list practices
-- `SessionChat` — transcript + AI feedback as a chat, generate final score
-- `PreTraining` — domain-specific coaching before you start
-- `Leaderboard` — ranked by improvement score + recommended mentors
-- `Messages` — DM mentors for advice
+Copy `.env.example` to `.env.local` and provide the same Supabase project used
+by the backend:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_API_BASE_URL` (optional)
+
+## Routes
+
+- `/pre-training/:channelId?/:threadId?`
+- `/post-training/:channelId?/:sessionId?`
+- `/leaderboard/:channelId?`
+- `/dms/:conversationId?`
+
+All channel, session, leaderboard, peer, and message content is loaded from the
+FastAPI backend. The browser never calls an AI provider directly.
