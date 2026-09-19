@@ -331,6 +331,26 @@ export const api = {
       `/api/channels/${encodeURIComponent(channelId)}/sessions`,
       { method: "POST", body: JSON.stringify({ title: title || undefined }) },
     ),
+  addSessionSegment: (
+    sessionId: string,
+    data: {
+      segment_index: number;
+      transcript: string;
+      start_seconds: number;
+      end_seconds: number;
+      duration_seconds?: number;
+      audio_metrics?: Record<string, unknown>;
+    },
+  ) =>
+    request<{ segment: TranscriptSegment }>(`/api/sessions/${encodeURIComponent(sessionId)}/segments`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  completeSession: (sessionId: string) =>
+    request<{ session: TrainingSession; feedback: SessionFeedback; recommended_peers: LeaderboardEntry[] }>(
+      `/api/sessions/${encodeURIComponent(sessionId)}/complete`,
+      { method: "POST" },
+    ),
   session: (sessionId: string) => request<SessionDetail>(`/api/sessions/${encodeURIComponent(sessionId)}`),
   sessionSegments: (sessionId: string) =>
     request<{ segments: TranscriptSegment[] }>(`/api/sessions/${encodeURIComponent(sessionId)}/segments`),
@@ -345,8 +365,10 @@ export const api = {
   conversations: () => request<{ conversations: DMConversation[] }>("/api/dms"),
   openConversation: (userId: string) =>
     request<{ conversation_id: string; created_at: string }>(`/api/dms/with/${encodeURIComponent(userId)}`, { method: "POST" }),
-  dmMessages: (conversationId: string) =>
-    request<{ messages: DMMessage[] }>(`/api/dms/${encodeURIComponent(conversationId)}/messages`),
+  dmMessages: (conversationId: string, limit = 100, offset = 0) =>
+    request<{ messages: DMMessage[] }>(
+      `/api/dms/${encodeURIComponent(conversationId)}/messages?limit=${limit}&offset=${offset}`,
+    ),
   sendDM: (conversationId: string, content: string) =>
     request<{ message: DMMessage }>(`/api/dms/${encodeURIComponent(conversationId)}/messages`, {
       method: "POST",

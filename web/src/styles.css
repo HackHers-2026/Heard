@@ -7,10 +7,10 @@
   --surface-muted: #f7f6f3;
   --surface-subtle: #f5f5f4;
   --border: #e7e5e4;
-  --border-strong: #d6d3d1;
+  --border-strong: #8f8985;
   --text: #171717;
   --text-secondary: #65615f;
-  --text-muted: #837d79;
+  --text-muted: #6d6763;
   --accent: #d65d26;
   --accent-strong: #b94418;
   --accent-soft: #fff1e8;
@@ -76,7 +76,7 @@ textarea {
 
 input::placeholder,
 textarea::placeholder {
-  color: #8d8783;
+  color: #746e6a;
 }
 
 :focus-visible {
@@ -136,6 +136,14 @@ textarea::placeholder {
   background: var(--surface);
 }
 
+.app-shell.context-collapsed {
+  grid-template-columns: var(--sidebar-width) 0 minmax(0, 1fr);
+}
+
+.app-shell.context-collapsed .context-pane {
+  display: none;
+}
+
 .primary-sidebar,
 .context-pane,
 .workspace-pane {
@@ -148,12 +156,15 @@ textarea::placeholder {
   z-index: 20;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--surface-muted);
   border-right: 1px solid var(--border);
 }
 
 .brand-row {
   height: 4.75rem;
+  flex: 0 0 4.75rem;
   display: flex;
   align-items: center;
   gap: 0.65rem;
@@ -162,6 +173,7 @@ textarea::placeholder {
 }
 
 .sidebar-group {
+  flex: 0 0 auto;
   padding: 1.35rem 0.75rem;
 }
 
@@ -214,10 +226,14 @@ textarea::placeholder {
 
 .mode-row.is-active .chevron {
   color: var(--accent-strong);
+}
+
+.mode-row.is-expanded .chevron {
   transform: rotate(90deg);
 }
 
 .sidebar-footer {
+  flex: 0 0 auto;
   margin-top: auto;
   padding: 0.9rem 1rem 1.05rem;
   border-top: 1px solid var(--border);
@@ -507,6 +523,89 @@ textarea::placeholder {
   line-height: 1.65;
 }
 
+.session-workflow-state {
+  min-height: 100%;
+}
+
+.session-capture {
+  width: min(42rem, calc(100% - 3rem));
+  margin: 0 auto;
+  padding: clamp(2rem, 6vh, 4.5rem) 0;
+}
+
+.session-capture h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.session-capture > .secondary-copy {
+  max-width: 38rem;
+  margin: 0.6rem 0 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.capture-status {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-pale);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.session-capture label {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  color: #423d3a;
+  font-size: 0.8125rem;
+  font-weight: 620;
+}
+
+.session-capture textarea,
+.session-capture input {
+  width: 100%;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.9375rem;
+  font-weight: 400;
+}
+
+.session-capture textarea {
+  min-height: 10rem;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.session-capture .duration-field {
+  width: min(16rem, 100%);
+}
+
+.field-error {
+  margin: 0.45rem 0 0;
+  color: var(--danger);
+  font-size: 0.8125rem;
+}
+
+.session-capture .inline-state {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.capture-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -664,9 +763,19 @@ textarea::placeholder {
   font-weight: 700;
 }
 
-.ai-message > header time {
+.ai-message > header time,
+.pending-status {
   color: var(--text-muted);
   font-size: 0.6875rem;
+}
+
+.ai-message.is-pending {
+  border-color: #c8896b;
+}
+
+.pending-status {
+  color: #8b3d20;
+  font-weight: 650;
 }
 
 .rich-text {
@@ -1035,6 +1144,74 @@ textarea::placeholder {
 .change-list small {
   color: var(--text-muted);
   font-size: 0.75rem;
+}
+
+.observation-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.observation-list article {
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.observation-list span,
+.observation-list small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.observation-list span {
+  color: #8f3414;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.observation-list strong {
+  font-size: 0.875rem;
+}
+
+.observation-list p {
+  margin: 0.2rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.interpretation-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 1.5rem;
+  margin: 0.85rem 0 0;
+}
+
+.interpretation-list > div {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0.65rem;
+}
+
+.interpretation-list dt,
+.interpretation-list dd {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.interpretation-list dt {
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.interpretation-list dd {
+  color: var(--text-secondary);
 }
 
 .split-feedback {
@@ -1638,17 +1815,26 @@ textarea::placeholder {
     grid-template-columns: minmax(17rem, 20rem) minmax(0, 1fr);
   }
 
+  .app-shell.context-collapsed .context-pane {
+    display: flex;
+  }
+
   .primary-sidebar {
     position: fixed;
     inset: 0 auto 0 0;
     width: min(18rem, calc(100vw - 3rem));
+    visibility: hidden;
+    pointer-events: none;
     transform: translateX(-100%);
     box-shadow: 1rem 0 2.5rem rgba(40, 31, 26, 0.12);
-    transition: transform 150ms ease;
+    transition: transform 150ms ease, visibility 0s linear 150ms;
   }
 
   .nav-open .primary-sidebar {
+    visibility: visible;
+    pointer-events: auto;
     transform: translateX(0);
+    transition-delay: 0s;
   }
 
   .mobile-scrim {
@@ -1800,6 +1986,11 @@ textarea::placeholder {
   .split-feedback {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+
+  .observation-list,
+  .interpretation-list {
+    grid-template-columns: 1fr;
   }
 
   .raw-metrics {

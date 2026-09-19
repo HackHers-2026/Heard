@@ -15,11 +15,12 @@ export function ChatComposer({ label, placeholder, onSend, busy = false, disable
   const [value, setValue] = useState("");
 
   async function submit() {
+    const submittedValue = value;
     const content = value.trim();
     if (!content || busy || disabled) return;
     try {
       await onSend(content);
-      setValue("");
+      setValue((current) => current === submittedValue ? "" : current);
     } catch {
       // The parent owns the visible error state; keep the draft for retry.
     }
@@ -91,11 +92,16 @@ export function AIMessageList({
           return <p className="system-message" key={message.id}>{message.content}</p>;
         }
         const assistant = message.sender_type === "assistant";
+        const pending = message.id.startsWith("pending-");
         return (
-          <article className={`ai-message ${assistant ? "is-assistant" : "is-user"}`} key={message.id}>
+          <article className={`ai-message ${assistant ? "is-assistant" : "is-user"} ${pending ? "is-pending" : ""}`} key={message.id}>
             <header>
               <strong>{assistant ? "Heard" : "You"}</strong>
-              <time dateTime={message.created_at}>{formatDate(message.created_at, true)}</time>
+              {pending ? (
+                <span className="pending-status" role="status">{sending ? "Sending…" : "Delivery unconfirmed"}</span>
+              ) : (
+                <time dateTime={message.created_at}>{formatDate(message.created_at, true)}</time>
+              )}
             </header>
             <RichText content={message.content} />
           </article>

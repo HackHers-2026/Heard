@@ -1,6 +1,12 @@
+function parseBackendDate(value: string) {
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
+  const looksLikeIsoDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value);
+  return new Date(looksLikeIsoDateTime && !hasTimezone ? `${value}Z` : value);
+}
+
 export function formatDate(value?: string | null, includeTime = false) {
   if (!value) return "—";
-  const date = new Date(value);
+  const date = parseBackendDate(value);
   if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -12,7 +18,7 @@ export function formatDate(value?: string | null, includeTime = false) {
 
 export function formatRelativeDate(value?: string | null) {
   if (!value) return "—";
-  const date = new Date(value);
+  const date = parseBackendDate(value);
   if (Number.isNaN(date.getTime())) return "—";
 
   const today = new Date();

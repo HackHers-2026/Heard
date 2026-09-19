@@ -29,3 +29,8 @@ by the backend:
 
 All channel, session, leaderboard, peer, and message content is loaded from the
 FastAPI backend. The browser never calls an AI provider directly.
+
+The post-training workspace includes a lightweight transcript workflow backed
+by the session segment and completion endpoints. It does not synthesize audio
+metrics; volume and other audio-only results remain unavailable unless a
+recording client supplied those measurements.
