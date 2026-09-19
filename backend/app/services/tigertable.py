@@ -1,42 +1,72 @@
-"""TigerTable integration (https://tigertable.com).
+"""TigerData analytics — inserts events into TimescaleDB hypertables.
 
-Intended use in Heard: push each completed practice (scores, domain, improvement
-delta) into a TigerTable table so we get sharable, structured analytics and can
-build the leaderboard / progress-over-time views on top of it.
-
-INTEGRATION STATUS: exploratory. Confirm the real API surface before relying on
-this. For now this module mirrors rows locally and no-ops the remote call when
-TIGERTABLE_API_KEY is unset.
+No-op stub when TIGERDATA_URL is unset — never crashes local dev or tests.
+Connection is created once per process and reused.
 """
 from __future__ import annotations
+import os
+from datetime import datetime, timezone
 
-import httpx
+_TIGERDATA_URL = os.getenv("TIGERDATA_URL", "")
 
-from app.config import settings
+# In-process mirror — always populated, used when no DB connection
+_local: list[dict] = []
 
-# Local mirror for dev / demo.
-_rows: list[dict] = []
+_conn = None
 
 
-async def sync_practice(row: dict) -> None:
-    """Upsert a completed-practice row into TigerTable.
+def _get_conn():
+    global _conn
+    if _conn is None or _conn.closed:
+        try:
+            import psycopg2
+            _conn = psycopg2.connect(_TIGERDATA_URL)
+            _conn.autocommit = True
+        except Exception:
+            _conn = None
+    return _conn
 
-    Expected row keys: user_id, display_name, domain, score, improvement_score,
-    session_id, created_at.
-    """
-    _rows.append(row)
-    if not settings.tigertable_api_key:
+
+def track(event: str, payload: dict) -> None:
+    """Insert one analytics event. Silently drops on any error."""
+    now = datetime.now(timezone.utc)
+    _local.append({"event": event, "time": now.isoformat(), **payload})
+
+    if not _TIGERDATA_URL:
         return
 
-    async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.post(
-            f"{settings.tigertable_base_url}/v1/rows",
-            headers={"Authorization": f"Bearer {settings.tigertable_api_key}"},
-            json={"table": "practices", "row": row},
-        )
-        resp.raise_for_status()
+    try:
+        conn = _get_conn()
+        if conn is None:
+            return
+        with conn.cursor() as cur:
+            if event == "speech.ended":
+                cur.execute(
+                    """INSERT INTO speech_events
+                       (time, user_id, speech_id, overall, clarity, volume, pace, confidence, structure)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (now, payload.get("user_id"), payload.get("speech_id"),
+                     payload.get("overall"), payload.get("clarity"), payload.get("volume"),
+                     payload.get("pace"), payload.get("confidence"), payload.get("structure")),
+                )
+            elif event == "segment.posted":
+                cur.execute(
+                    """INSERT INTO segment_events (time, speech_id, pace_wpm, avg_volume)
+                       VALUES (%s, %s, %s, %s)""",
+                    (now, payload.get("speech_id"),
+                     payload.get("pace_wpm"), payload.get("avg_volume")),
+                )
+            elif event == "post.liked":
+                cur.execute(
+                    """INSERT INTO post_likes (time, post_id, user_id, career_tag)
+                       VALUES (%s, %s, %s, %s)""",
+                    (now, payload.get("post_id"),
+                     payload.get("user_id"), payload.get("career_tag")),
+                )
+    except Exception:
+        pass  # analytics must never break the main flow
 
 
-def local_rows() -> list[dict]:
-    """Expose the local mirror (used by dashboards during the hackathon)."""
-    return _rows
+def local_events() -> list[dict]:
+    """In-process mirror — available with or without a DB connection."""
+    return _local

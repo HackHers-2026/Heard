@@ -95,64 +95,22 @@ first; wire real keys via `backend/.env` later.
 - Keep changes minimal and localized; match existing style.
 - This is Windows/PowerShell — chain shell commands with `;`, not `&&`.
 - Don't commit `heard.db`, `node_modules/`, `dist/`, or any `.env`.
-# Heard — Hackathon Context
-
-**One-liner:** A safe space for women to practice speaking up — with AI encouragement before, real-time coaching during, and community + mentorship after.
-
-**Track:** Empower women through education, career growth, and connection.
-
-**Core problem:** Women struggle with confidence and capability to speak up in work, personal, and public settings.
 
 ---
 
-## Team
+## MCP usage — load on demand only
 
-| Person | Role | Task file |
-|--------|------|-----------|
-| Ran | Backend | `tasks/01-backend.md` |
-| TBD | Frontend | `tasks/02-frontend.md` |
-| TBD | Chrome extension | `tasks/03-chrome.md` |
+MCPs are deferred by default — schemas don't load until invoked. Only call one when you're actively doing that work.
 
-**Read `tasks/00-contracts.md` first** — it defines the data models and API interfaces everyone depends on.
+| MCP | Load when... |
+|-----|-------------|
+| Supabase | creating tables, running migrations, querying DB |
+| ElevenLabs | testing or debugging transcription calls |
+| Backboard | working on Gemini prompts / session memory |
+| TigerTable | wiring analytics (stretch only, after 10PM) |
 
----
-
-## Product flows (5)
-
-| # | Flow | Entry point | Platform |
-|---|------|-------------|----------|
-| 1 | Pre-speech encouragement | "Encourage me" button → AI chatbot, or plan a speech | webapp |
-| 2 | Real-time feedback | Live volume + pace analysis, updated every 2 min, ≤10-word nudge | chrome extension |
-| 3 | Post-speech report | 5-metric scored summary + mentor connection suggestions | webapp |
-| 4 | Community feed | Reports posted publicly; liked, tagged by career/topic | webapp |
-| 5 | User profile | Radar/pentagon chart of top-3 speeches; mentor toggle; LinkedIn login | webapp |
-
----
-
-## Speech metrics (5 dimensions)
-
-1. **Clarity** — how well-structured and understandable the speech is
-2. **Volume** — loudness consistency (from audio level)
-3. **Pace** — words-per-minute vs. comfortable range
-4. **Confidence** — hedging language, filler words (um, uh, like)
-5. **Structure** — intro / body / conclusion presence
-
----
-
-## Tech stack
-
-| Layer | Choice | Notes |
-|-------|--------|-------|
-| Frontend | React + Next.js | Deployed on Vercel (free tier) |
-| Backend | TBD (Node/Python) | API server; keep it thin |
-| Database | Supabase | Postgres; auth + realtime built in |
-| Analytics | TigerData → Supabase | User speech stats and aggregates; see [TigerData Supabase docs](https://www.tigerdata.com/docs/integrate/data-engineering-etl/supabase) |
-| AI analysis | Gemini API | Real-time 2-min transcript → nudge; post-speech 5-metric scoring |
-| Pre-speech AI | Gemini API | Encouragement chatbot |
-| Auth | Supabase magic link | POC default; LinkedIn OAuth via Auth0 is stretch (after 10PM) |
-| Transcript capture | Web Speech API | Browser-native; runs inside the Chrome extension |
-| Volume capture | Web Audio API (`AudioContext` / `AnalyserNode`) | Parallel stream alongside speech recognition; samples amplitude every frame |
-| Chrome extension | Manifest V3 | Hosts the real-time feedback UI |
+> Gemini has no MCP — use API key in code.
+> Backboard (https://docs.backboard.io) makes Gemini prompts stateful — session memory persists across calls.
 
 ---
 
@@ -175,17 +133,17 @@ first; wire real keys via `backend/.env` later.
 ## Task files
 
 ```
-tasks/
-  00-contracts.md    Data models + API interfaces — read this first
-  01-backend.md      Backend — API routes, scoring, Gemini integration
-  02-frontend.md     Frontend — web dashboard, Vercel deploy
-  03-chrome.md       Chrome — Manifest V3, real-time audio + nudge UI
+docs/contracts.md          Data models + API interfaces — read before touching code
+backend/00-provision.md    Research + provision all services before writing code
+backend/01-backend.md      Backend requirements
+web/02-frontend.md         Frontend requirements
+extension/03-chrome.md     Chrome extension requirements
 ```
 
 ## Quick start
 
 1. Read this file.
-2. Read `tasks/00-contracts.md` before touching any code.
+2. Read `docs/contracts.md` before touching any code.
 3. Read your task file.
 4. Secrets go in `backend/.env` — never commit. Ask Ran for key names.
 5. Happy path first; skip edge cases until the core flow works end-to-end.

@@ -230,3 +230,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+#personal
+documents/
+.mcp.json
+
+# frontend — handled separately
+web/
