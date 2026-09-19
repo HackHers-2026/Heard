@@ -13,10 +13,16 @@ ElevenLabs Scribe realtime v2.
 
 ## Use it
 
-1. Click **Start recording** → allow microphone access when prompted.
+1. Click **Start recording**. The **first time**, a small tab opens asking for
+   microphone access — click **Allow**. (Side panels can't show the mic prompt
+   directly, so Heard requests it from a normal extension tab; the grant is
+   remembered for the whole extension, so you only do this once.)
 2. Speak. Words stream into the transcript live (interim text is grey, finalized
    text is solid).
 3. Click **Stop** to end. **Clear** wipes the current transcript.
+
+> If you had previously **blocked** the mic: in the permission tab, click the
+> tune/lock icon left of the address bar, set **Microphone → Allow**, then retry.
 
 ## Where the transcript lives (this step)
 

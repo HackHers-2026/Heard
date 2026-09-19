@@ -22,6 +22,9 @@ const els = {
 
 const STORAGE_KEY = "heard_live_transcript";
 const FLUSH_MS = 200; // send audio to the backend ~5x/second
+const MIC_CONSTRAINTS = {
+  audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+};
 
 let ws = null;
 let audioContext = null;
@@ -56,22 +59,71 @@ els.clear.addEventListener("click", async () => {
 // Recording lifecycle
 // ---------------------------------------------------------------------------
 async function start() {
+  els.start.disabled = true;
   setStatus("Requesting microphone…");
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
-    });
-  } catch (err) {
-    setStatus(`Microphone blocked: ${err.name}. Allow mic access for this extension.`);
-    return;
+
+  mediaStream = await acquireMic();
+  if (!mediaStream) {
+    els.start.disabled = false;
+    return; // acquireMic already set an explanatory status
   }
 
   openSocket();
   await startAudioGraph();
 
-  els.start.disabled = true;
   els.stop.disabled = false;
   setStatus("Listening… speak naturally.");
+}
+
+// Get a mic stream, explicitly prompting for permission when needed.
+// Side panels can't reliably show the mic prompt, so if the direct request is
+// blocked we open a normal extension tab to obtain the grant, then retry.
+async function acquireMic() {
+  try {
+    return await navigator.mediaDevices.getUserMedia(MIC_CONSTRAINTS);
+  } catch (err) {
+    if (err.name !== "NotAllowedError" && err.name !== "SecurityError") {
+      setStatus(`Microphone error: ${err.name}`);
+      return null;
+    }
+  }
+
+  // Blocked/undecided: request via a dedicated permission tab.
+  setStatus("Opening a tab to grant microphone access — click “Allow”…");
+  const granted = await requestPermissionViaTab();
+  if (!granted) {
+    setStatus("Microphone access denied. Allow it in the tab that opened, then click Start again.");
+    return null;
+  }
+
+  try {
+    return await navigator.mediaDevices.getUserMedia(MIC_CONSTRAINTS);
+  } catch (err) {
+    setStatus(`Still blocked: ${err.name}. Check the mic setting for this extension.`);
+    return null;
+  }
+}
+
+// Opens permission/request.html in a tab; it triggers the prompt and reports
+// back via chrome.runtime messaging.
+function requestPermissionViaTab() {
+  return new Promise((resolve) => {
+    const listener = (msg) => {
+      if (msg?.type === "MIC_PERMISSION") {
+        chrome.runtime.onMessage.removeListener(listener);
+        clearTimeout(timer);
+        resolve(!!msg.granted);
+      }
+    };
+    chrome.runtime.onMessage.addListener(listener);
+    chrome.tabs.create({ url: chrome.runtime.getURL("permission/request.html") });
+
+    // Safety net if the user closes the tab without deciding.
+    const timer = setTimeout(() => {
+      chrome.runtime.onMessage.removeListener(listener);
+      resolve(false);
+    }, 120000);
+  });
 }
 
 async function stop() {
