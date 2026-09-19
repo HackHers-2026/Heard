@@ -100,6 +100,20 @@
 }
 ```
 
+### ChatMessage
+```ts
+{
+  id: string
+  session_hash: string        // sha256(speech_id)[:16] — stable conversation key
+  speech_id: string | null
+  role: "user" | "model"
+  phase: "preptalk" | "activetalk" | "talksummary"
+  content: string
+  summary: string             // 3-5 word label, e.g. "asked about opening line"
+  created_at: string
+}
+```
+
 ---
 
 ## API routes
@@ -189,6 +203,25 @@ User profile with top-3 speech averages for the radar chart.
 }
 ```
 
+### POST /api/speech/:id/chat
+Send a message to the AI coach for this speech session. Gemini responds in context of the last 5 exchanges.
+```ts
+// request
+{ message: string, phase: "preptalk" | "activetalk" | "talksummary" }
+
+// response
+{ reply: string, phase: string, summary: string }   // summary = 3-5 word label
+```
+
+### GET /api/speech/:id/chat
+Fetch the full conversation thread for a speech session.
+```ts
+// query params: ?phase=preptalk  (optional filter)
+
+// response
+{ messages: ChatMessage[] }
+```
+
 ### POST /api/mentor/connect
 Send a mentor connection request, triggered from the post-speech report.
 ```ts
@@ -205,13 +238,14 @@ Send a mentor connection request, triggered from the post-speech report.
 
 | Table | Maps to |
 |-------|---------|
-| `users` | User |
-| `speeches` | Speech |
-| `speech_metrics` | SpeechMetrics |
-| `realtime_segments` | RealtimeSegment |
-| `community_posts` | CommunityPost |
-| `likes` | Like |
-| `mentor_connections` | MentorConnection |
+| `user` | User |
+| `speech` | Speech |
+| `speechmetrics` | SpeechMetrics |
+| `realtimesegment` | RealtimeSegment |
+| `communitypost` | CommunityPost |
+| `like` | Like |
+| `mentorconnection` | MentorConnection |
+| `chatmessage` | ChatMessage |
 
 Analytics / aggregated stats come from TigerData → Supabase. See [TigerData Supabase docs](https://www.tigerdata.com/docs/integrate/data-engineering-etl/supabase).
 

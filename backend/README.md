@@ -34,9 +34,11 @@ uvicorn app.main:app --reload
 |--------|------|------|---------|
 | POST | `/api/encourage` | JWT | Pre-speech encouragement (quick or plan mode) |
 | POST | `/api/speech/start` | JWT | Start a live speech session |
-| POST | `/api/speech/segment` | — | Submit 2-min transcript chunk + audio stats → nudge |
-| POST | `/api/speech/end` | — | End session, trigger async scoring |
+| POST | `/api/speech/segment` | session_token | Submit 2-min transcript chunk + audio stats → nudge |
+| POST | `/api/speech/end` | session_token | End session, trigger async scoring |
 | GET | `/api/speech/{id}/report` | JWT | 5-metric report (ready after `/end`) |
+| POST | `/api/speech/{id}/chat` | JWT | Chat with AI coach (preptalk / activetalk / talksummary) |
+| GET | `/api/speech/{id}/chat` | JWT | Fetch chat thread, optionally filter by ?phase= |
 | GET | `/api/feed` | JWT | Paginated community posts |
 | POST | `/api/feed` | JWT | Share a speech to the feed |
 | POST | `/api/feed/{id}/like` | JWT | Toggle like on a post |
@@ -63,7 +65,7 @@ Only a 600-char excerpt goes to Gemini for scoring (~300 tokens vs ~2k for full 
 ```
 app/
   main.py             app + router registration
-  models.py           7 SQLModel tables (User, Speech, SpeechMetrics, …)
+  models.py           8 SQLModel tables (User, Speech, SpeechMetrics, …, ChatMessage)
   dependencies.py     get_current_user (Supabase JWT), get_session
   config.py           env settings (pydantic-settings)
   database.py         engine + get_session generator
@@ -73,6 +75,7 @@ app/
     feed.py
     profile.py
     mentor.py
+    chat.py
   services/
     gemini.py         encourage / nudge / score (hybrid)
     scoring.py        top_speeches / average_metrics / find_mentors
@@ -80,7 +83,9 @@ app/
     backboard.py      Gemini memory (stretch)
     tigertable.py     analytics (stretch)
 migrations/
-  001_initial_schema.sql   run once in Supabase SQL editor
+  001_initial_schema.sql        7 core tables
+  002_chat_memory.sql           chatmessage table + session_hash index
+  003_chat_memory_phase.sql     adds phase + summary columns
 tests/
   conftest.py         session-scoped DB setup
   test_setup.py       health + route registration (spec 01)
@@ -97,7 +102,7 @@ tests/
 ```bash
 cd backend
 source .venv/bin/activate
-pytest tests/          # 59 tests, all green, no API keys needed
+pytest tests/          # 59 tests, all green, no API keys needed (chat router tested via component tests)
 ```
 
 ## Env vars
