@@ -1140,41 +1140,9 @@
           <div class="nav-label">AI Chat</div>
 
           <div class="chat-list" id="chatList">
-            <button class="chat-item active-chat" data-chat="Welcome planning">
-              <span class="chat-status"></span>
-              <span class="chat-title">Welcome planning</span>
-              <span class="chat-time">Now</span>
-            </button>
-
-            <button class="chat-item" data-chat="Website design ideas">
-              <span class="chat-status"></span>
-              <span class="chat-title">Website design ideas</span>
-              <span class="chat-time">Today</span>
-            </button>
-
-            <button class="chat-item" data-chat="Brand color palette">
-              <span class="chat-status"></span>
-              <span class="chat-title">Brand color palette</span>
-              <span class="chat-time">Yesterday</span>
-            </button>
-
-            <button class="chat-item" data-chat="Social media strategy">
-              <span class="chat-status"></span>
-              <span class="chat-title">Social media strategy</span>
-              <span class="chat-time">Sep 15</span>
-            </button>
-
-            <button class="chat-item" data-chat="Content planning">
-              <span class="chat-status"></span>
-              <span class="chat-title">Content planning</span>
-              <span class="chat-time">Sep 12</span>
-            </button>
-
-            <button class="chat-item" data-chat="Project brainstorming">
-              <span class="chat-status"></span>
-              <span class="chat-title">Project brainstorming</span>
-              <span class="chat-time">Sep 08</span>
-            </button>
+            <div class="chat-item" aria-live="polite">
+              <span class="chat-title">Loading chats...</span>
+            </div>
           </div>
 
           <button class="new-chat-button" id="newChatButton">
@@ -1213,48 +1181,12 @@
         <div class="dm-directory" id="dmDirectory">
           <div class="nav-label">Direct messages</div>
 
-          <div class="dm-user-list">
-            <button class="dm-user active-dm-user" data-user="Maya Chen">
-              <span class="dm-avatar pink-avatar">MC</span>
-
+          <div class="dm-user-list" id="dmUserList">
+            <div class="dm-user" aria-live="polite">
               <span class="dm-user-info">
-                <strong>Maya Chen</strong>
-                <small>That sounds great!</small>
+                <strong>Loading contacts...</strong>
               </span>
-
-              <span class="dm-online-dot"></span>
-            </button>
-
-            <button class="dm-user" data-user="Jordan Miller">
-              <span class="dm-avatar coral-avatar">JM</span>
-
-              <span class="dm-user-info">
-                <strong>Jordan Miller</strong>
-                <small>I'll send it over soon.</small>
-              </span>
-
-              <span class="dm-online-dot"></span>
-            </button>
-
-            <button class="dm-user" data-user="Sarah Kim">
-              <span class="dm-avatar mauve-avatar">SK</span>
-
-              <span class="dm-user-info">
-                <strong>Sarah Kim</strong>
-                <small>Voice message · 0:42</small>
-              </span>
-
-              <span class="unread-count">2</span>
-            </button>
-
-            <button class="dm-user" data-user="Riley Lee">
-              <span class="dm-avatar blue-avatar">RL</span>
-
-              <span class="dm-user-info">
-                <strong>Riley Lee</strong>
-                <small>See you tomorrow!</small>
-              </span>
-            </button>
+            </div>
           </div>
 
           <button class="new-dm-button" id="newDmButton">
@@ -1281,14 +1213,14 @@
           <div class="nav-label">Account</div>
 
           <div class="profile-card">
-            <div class="avatar">AS</div>
+            <div class="avatar" id="profileAvatar">--</div>
 
             <div class="profile-info">
-              <div class="profile-name">Alia Stallard</div>
+              <div class="profile-name" id="profileName">Loading...</div>
 
-              <div class="profile-status">
+              <div class="profile-status" id="profileStatus">
                 <span class="online-dot"></span>
-                Online
+                Connecting
               </div>
             </div>
 
@@ -1305,7 +1237,7 @@
           <header class="chat-header">
             <div>
               <div class="chat-breadcrumb">AI Chat</div>
-              <h1 id="chatHeading">Welcome planning</h1>
+              <h1 id="chatHeading">AI Coach</h1>
             </div>
 
             <button class="header-action" aria-label="Chat options">•••</button>
@@ -1318,10 +1250,7 @@
               <div class="message-content">
                 <span class="message-author">Heard AI</span>
 
-                <p>
-                  Hi Alia! I’m ready to help you plan, create, and organize
-                  your ideas. What would you like to work on?
-                </p>
+                <p>Loading conversation…</p>
               </div>
             </div>
           </div>
@@ -1569,11 +1498,11 @@
 
               <div>
                 <div class="chat-breadcrumb">Direct message</div>
-                <h1 id="activeDmName">Maya Chen</h1>
+                <h1 id="activeDmName">Select a contact</h1>
 
                 <span class="active-status" id="activeDmStatus">
                   <span class="dm-online-dot"></span>
-                  Online
+                  Waiting for contacts
                 </span>
               </div>
             </div>
@@ -1597,7 +1526,7 @@
             <input
               type="text"
               id="dmMessageInput"
-              placeholder="Message Maya Chen..."
+              placeholder="Message contact..."
               autocomplete="off"
             />
 
@@ -1612,7 +1541,6 @@
         </section>
       </main>
     </div>
-
     <script>
       const aiChatSidebar = document.getElementById("aiChatSidebar");
       const sectionNavigation = document.getElementById("sectionNavigation");
@@ -1630,13 +1558,12 @@
       const messageForm = document.getElementById("messageForm");
       const messageInput = document.getElementById("messageInput");
       const newChatButton = document.getElementById("newChatButton");
-      let chatPills = document.querySelectorAll(".chat-pill");
-      let topicFlowStarted = false;
+      const dmUserList = document.getElementById("dmUserList");
 
+      let chatPills = document.querySelectorAll(".chat-pill");
       const sectionLinks = document.querySelectorAll(".section-link");
       const compactButtons = document.querySelectorAll(".compact-nav-button");
 
-      const dmUsers = document.querySelectorAll(".dm-user");
       const dmMessages = document.getElementById("dmMessages");
       const dmMessageForm = document.getElementById("dmMessageForm");
       const dmMessageInput = document.getElementById("dmMessageInput");
@@ -1644,75 +1571,77 @@
       const activeDmAvatar = document.getElementById("activeDmAvatar");
       const activeDmStatus = document.getElementById("activeDmStatus");
 
-      const dmContacts = {
-        "Maya Chen": {
-          initials: "MC",
-          colorClass: "pink-avatar",
-          status: "Online",
-          messages: [
-            {
-              type: "received",
-              time: "10:14 AM",
-              text: "Hey! Have you had a chance to look at the new channel posts?"
-            },
-            {
-              type: "sent",
-              time: "10:16 AM",
-              text: "Yes, I really liked the presentation you shared."
-            },
-            {
-              type: "received",
-              time: "10:17 AM",
-              text: "That sounds great! I can send you the editable version too."
-            }
-          ]
-        },
+      const profileAvatar = document.getElementById("profileAvatar");
+      const profileName = document.getElementById("profileName");
+      const profileStatus = document.getElementById("profileStatus");
 
-        "Jordan Miller": {
-          initials: "JM",
-          colorClass: "coral-avatar",
-          status: "Online",
-          messages: [
-            {
-              type: "received",
-              time: "Yesterday",
-              text: "I'll send it over soon."
-            }
-          ]
-        },
-
-        "Sarah Kim": {
-          initials: "SK",
-          colorClass: "mauve-avatar",
-          status: "Away",
-          messages: [
-            {
-              type: "received",
-              time: "Monday",
-              text: "I just uploaded the audio recording to the channel."
-            }
-          ]
-        },
-
-        "Riley Lee": {
-          initials: "RL",
-          colorClass: "blue-avatar",
-          status: "Offline",
-          messages: [
-            {
-              type: "received",
-              time: "Sunday",
-              text: "See you tomorrow!"
-            }
-          ]
-        }
+      const avatarColors = ["pink-avatar", "coral-avatar", "mauve-avatar", "blue-avatar"];
+      const state = {
+        user: null,
+        speeches: [],
+        activeSpeechId: null,
+        speechMessages: {},
+        contacts: [],
+        activeContactId: null,
+        unauthenticated: false,
       };
+
+      function token() {
+        return localStorage.getItem("heard_token");
+      }
+
+      function avatarClass(seed = "") {
+        let hash = 0;
+        for (let i = 0; i < seed.length; i += 1) {
+          hash = (hash << 5) - hash + seed.charCodeAt(i);
+          hash |= 0;
+        }
+        return avatarColors[Math.abs(hash) % avatarColors.length];
+      }
+
+      function formatTime(value) {
+        if (!value) return "";
+        const when = new Date(value);
+        if (Number.isNaN(when.getTime())) return "";
+        const diffMs = Date.now() - when.getTime();
+        if (diffMs < 60_000) return "Now";
+        if (diffMs < 86_400_000) return "Today";
+        if (diffMs < 172_800_000) return "Yesterday";
+        return when.toLocaleDateString(undefined, { month: "short", day: "2-digit" });
+      }
+
+      async function apiRequest(path, options = {}) {
+        const headers = {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+        };
+        const authToken = token();
+        if (authToken) {
+          headers.Authorization = "Bearer " + authToken;
+        }
+
+        const response = await fetch(`/api${path}`, {
+          ...options,
+          headers,
+        });
+
+        if (!response.ok) {
+          const message = (await response.text()) || response.statusText;
+          const error = new Error(message);
+          error.status = response.status;
+          throw error;
+        }
+
+        if (response.status === 204) {
+          return undefined;
+        }
+
+        return response.json();
+      }
 
       function updateActiveSection(pageName) {
         sectionLinks.forEach((link) => {
-          const isActive =
-            link.dataset.page === pageName && pageName !== "DMs";
-
+          const isActive = link.dataset.page === pageName && pageName !== "DMs";
           link.classList.toggle("active-section", isActive);
         });
       }
@@ -1750,8 +1679,20 @@
         dmPanel.style.display = "flex";
       }
 
-      function renderAiChat(chatName) {
-        chatHeading.textContent = chatName;
+      function renderProfile() {
+        if (!state.user) {
+          profileAvatar.textContent = "--";
+          profileName.textContent = "Guest";
+          profileStatus.innerHTML = '<span class="online-dot"></span>Offline';
+          return;
+        }
+
+        profileAvatar.textContent = state.user.avatar_initials || "ME";
+        profileName.textContent = state.user.name || "You";
+        profileStatus.innerHTML = '<span class="online-dot"></span>Online';
+      }
+
+      function renderAiStatus(text) {
         messages.innerHTML = "";
 
         const message = document.createElement("div");
@@ -1768,115 +1709,192 @@
         author.className = "message-author";
         author.textContent = "Heard AI";
 
-        const text = document.createElement("p");
-        text.textContent =
-          `This is the beginning of your "${chatName}" conversation. ` +
-          "How can I help you continue?";
+        const messageText = document.createElement("p");
+        messageText.textContent = text;
 
-        content.append(author, text);
+        content.append(author, messageText);
         message.append(avatar, content);
         messages.appendChild(message);
       }
 
-      function renderDirectMessages(userName) {
-        const contact = dmContacts[userName];
+      function renderDmStatus(text) {
+        dmMessages.innerHTML = "";
+        const wrapper = document.createElement("div");
+        wrapper.className = "dm-message received";
 
-        if (!contact) {
+        const body = document.createElement("div");
+        body.className = "dm-message-body";
+
+        const time = document.createElement("span");
+        time.className = "dm-message-time";
+        time.textContent = "Now";
+
+        const content = document.createElement("p");
+        content.textContent = text;
+
+        body.append(time, content);
+        wrapper.appendChild(body);
+        dmMessages.appendChild(wrapper);
+      }
+
+      function updateUnreadBadges() {
+        const totalUnread = state.contacts.reduce(
+          (sum, contact) => sum + Number(contact.unread_count || 0),
+          0
+        );
+
+        document.querySelectorAll(".notification").forEach((badge) => {
+          badge.textContent = String(totalUnread || 0);
+        });
+      }
+
+      function renderChatList() {
+        chatList.innerHTML = "";
+
+        if (state.speeches.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "chat-item";
+          empty.innerHTML = '<span class="chat-title">No chats yet</span>';
+          chatList.appendChild(empty);
+          chatHeading.textContent = "AI Coach";
+          renderAiStatus("Start a chat to get coaching from Heard AI.");
           return;
         }
 
-        activeDmName.textContent = userName;
-        activeDmAvatar.textContent = contact.initials;
-        activeDmAvatar.className =
-          `dm-avatar large-avatar ${contact.colorClass}`;
+        state.speeches.forEach((speech) => {
+          const button = document.createElement("button");
+          button.className = "chat-item";
+          button.dataset.speechId = speech.id;
 
-        activeDmStatus.innerHTML = "";
-
-        const statusDot = document.createElement("span");
-        statusDot.className = "dm-online-dot";
-
-        activeDmStatus.append(
-          statusDot,
-          document.createTextNode(contact.status)
-        );
-
-        dmMessageInput.placeholder = `Message ${userName}...`;
-        dmMessages.innerHTML = "";
-
-        contact.messages.forEach((message) => {
-          const messageElement = document.createElement("div");
-          messageElement.className = `dm-message ${message.type}`;
-
-          if (message.type === "received") {
-            const avatar = document.createElement("div");
-            avatar.className =
-              `dm-message-avatar ${contact.colorClass}`;
-            avatar.textContent = contact.initials;
-            messageElement.appendChild(avatar);
+          if (speech.id === state.activeSpeechId) {
+            button.classList.add("active-chat");
           }
 
-          const messageBody = document.createElement("div");
-          messageBody.className = "dm-message-body";
+          const timeLabel = speech.time_label || formatTime(speech.last_message_at || speech.started_at) || "Now";
+          button.innerHTML = `
+            <span class="chat-status"></span>
+            <span class="chat-title"></span>
+            <span class="chat-time"></span>
+          `;
 
-          const time = document.createElement("span");
-          time.className = "dm-message-time";
-          time.textContent = message.time;
+          button.querySelector(".chat-title").textContent = speech.title || "Practice session";
+          button.querySelector(".chat-time").textContent = timeLabel;
 
-          const text = document.createElement("p");
-          text.textContent = message.text;
+          button.addEventListener("click", async () => {
+            state.activeSpeechId = speech.id;
+            renderChatList();
+            await loadSpeechMessages(speech.id, true);
+          });
 
-          messageBody.append(time, text);
-          messageElement.appendChild(messageBody);
-          dmMessages.appendChild(messageElement);
+          chatList.appendChild(button);
+        });
+      }
+
+      function addAiMessage(role, text) {
+        const message = document.createElement("div");
+        message.className = `message ${role === "user" ? "user-message" : "assistant-message"}`;
+
+        const avatar = document.createElement("div");
+        avatar.className = "message-avatar";
+        avatar.textContent = role === "user" ? (state.user?.avatar_initials || "ME") : "✦";
+
+        const content = document.createElement("div");
+        content.className = "message-content";
+
+        const author = document.createElement("span");
+        author.className = "message-author";
+        author.textContent = role === "user" ? "You" : "Heard AI";
+
+        const messageText = document.createElement("p");
+        messageText.textContent = text;
+
+        content.append(author, messageText);
+        message.append(avatar, content);
+        messages.appendChild(message);
+      }
+
+      function renderAiMessages() {
+        const active = state.speeches.find((speech) => speech.id === state.activeSpeechId);
+        chatHeading.textContent = active?.title || "AI Coach";
+
+        const thread = state.speechMessages[state.activeSpeechId] || [];
+        messages.innerHTML = "";
+
+        if (!state.activeSpeechId) {
+          renderAiStatus("Select a chat to view messages.");
+          return;
+        }
+
+        if (thread.length === 0) {
+          renderAiStatus("No messages yet. Send a message to begin this conversation.");
+          return;
+        }
+
+        thread.forEach((item) => {
+          const role = item.role === "model" ? "model" : "user";
+          addAiMessage(role, item.content);
         });
 
-        dmMessages.scrollTop = dmMessages.scrollHeight;
+        messages.scrollTop = messages.scrollHeight;
       }
 
-      function addAiUserMessage(text) {
-        const message = document.createElement("div");
-        message.className = "message user-message";
+      function renderContacts() {
+        dmUserList.innerHTML = "";
 
-        const avatar = document.createElement("div");
-        avatar.className = "message-avatar";
-        avatar.textContent = "AS";
+        if (state.contacts.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "dm-user";
+          empty.innerHTML = '<span class="dm-user-info"><strong>No contacts available</strong><small>Mentor connections will appear here.</small></span>';
+          dmUserList.appendChild(empty);
+          activeDmName.textContent = "No contact selected";
+          activeDmAvatar.textContent = "--";
+          activeDmAvatar.className = "dm-avatar large-avatar pink-avatar";
+          activeDmStatus.innerHTML = '<span class="dm-online-dot"></span>Waiting for contact';
+          dmMessageInput.placeholder = "Message contact...";
+          dmMessageInput.disabled = true;
+          renderDmStatus("No direct message thread is available yet.");
+          return;
+        }
 
-        const content = document.createElement("div");
-        content.className = "message-content";
+        state.contacts.forEach((contact) => {
+          const button = document.createElement("button");
+          const selected = contact.id === state.activeContactId;
+          const colorClass = avatarClass(contact.id || contact.name || "");
+          button.className = `dm-user ${selected ? "active-dm-user" : ""}`.trim();
+          button.dataset.contactId = contact.id;
+          button.innerHTML = `
+            <span class="dm-avatar ${colorClass}">${contact.initials || "U"}</span>
+            <span class="dm-user-info">
+              <strong></strong>
+              <small></small>
+            </span>
+          `;
 
-        const author = document.createElement("span");
-        author.className = "message-author";
-        author.textContent = "You";
+          button.querySelector("strong").textContent = contact.name || "Contact";
+          button.querySelector("small").textContent = contact.preview || "No conversation yet";
 
-        const messageText = document.createElement("p");
-        messageText.textContent = text;
+          const unread = Number(contact.unread_count || 0);
+          if (unread > 0) {
+            const badge = document.createElement("span");
+            badge.className = "unread-count";
+            badge.textContent = String(unread);
+            button.appendChild(badge);
+          } else {
+            const dot = document.createElement("span");
+            dot.className = "dm-online-dot";
+            button.appendChild(dot);
+          }
 
-        content.append(author, messageText);
-        message.append(avatar, content);
-        messages.appendChild(message);
-      }
+          button.addEventListener("click", async () => {
+            state.activeContactId = contact.id;
+            renderContacts();
+            await renderDirectMessages();
+          });
 
-      function addAiAssistantMessage(text) {
-        const message = document.createElement("div");
-        message.className = "message assistant-message";
+          dmUserList.appendChild(button);
+        });
 
-        const avatar = document.createElement("div");
-        avatar.className = "message-avatar";
-        avatar.textContent = "✦";
-
-        const content = document.createElement("div");
-        content.className = "message-content";
-
-        const author = document.createElement("span");
-        author.className = "message-author";
-        author.textContent = "Heard AI";
-
-        const messageText = document.createElement("p");
-        messageText.textContent = text;
-
-        content.append(author, messageText);
-        message.append(avatar, content);
-        messages.appendChild(message);
+        dmMessageInput.disabled = false;
       }
 
       function addDmMessage(type, text, initials, colorClass, time) {
@@ -1905,63 +1923,114 @@
         dmMessages.appendChild(message);
       }
 
+      async function renderDirectMessages() {
+        const contact = state.contacts.find((item) => item.id === state.activeContactId);
+        if (!contact) {
+          renderDmStatus("Select a contact to view a conversation.");
+          return;
+        }
+
+        const colorClass = avatarClass(contact.id || contact.name || "");
+        activeDmName.textContent = contact.name || "Contact";
+        activeDmAvatar.textContent = contact.initials || "U";
+        activeDmAvatar.className = `dm-avatar large-avatar ${colorClass}`;
+        activeDmStatus.innerHTML = `<span class="dm-online-dot"></span>${contact.status || "Connected"}`;
+        dmMessageInput.placeholder = `Message ${contact.name || "contact"}...`;
+
+        if (!contact.speech_id) {
+          renderDmStatus("No direct message route is available yet for this contact.");
+          return;
+        }
+
+        await loadSpeechMessages(contact.speech_id);
+        const thread = state.speechMessages[contact.speech_id] || [];
+        dmMessages.innerHTML = "";
+
+        if (thread.length === 0) {
+          renderDmStatus("No messages yet for this contact conversation.");
+          return;
+        }
+
+        thread.forEach((message) => {
+          const type = message.role === "user" ? "sent" : "received";
+          addDmMessage(
+            type,
+            message.content,
+            contact.initials || "U",
+            colorClass,
+            formatTime(message.created_at) || "Now"
+          );
+        });
+
+        dmMessages.scrollTop = dmMessages.scrollHeight;
+      }
+
+      async function loadSpeechMessages(speechId, force = false) {
+        if (!speechId) return;
+        if (!force && state.speechMessages[speechId]) {
+          if (speechId === state.activeSpeechId) {
+            renderAiMessages();
+          }
+          return;
+        }
+
+        try {
+          const response = await apiRequest(`/speech/${speechId}/chat`);
+          state.speechMessages[speechId] = response.messages || [];
+
+          const last = state.speechMessages[speechId][state.speechMessages[speechId].length - 1];
+          const speech = state.speeches.find((item) => item.id === speechId);
+          if (speech && last) {
+            speech.last_message = last.content;
+            speech.last_message_at = last.created_at;
+            if (!speech.title || speech.title === "Practice session") {
+              speech.title = last.summary || speech.title;
+            }
+          }
+
+          if (speechId === state.activeSpeechId) {
+            renderAiMessages();
+            renderChatList();
+          }
+        } catch (error) {
+          if (speechId === state.activeSpeechId) {
+            renderAiStatus(`Could not load chat history: ${error.message}`);
+          }
+        }
+      }
+
+      async function createNewSpeech() {
+        const data = await apiRequest("/speech/start", {
+          method: "POST",
+          body: JSON.stringify({}),
+        });
+
+        const newSpeech = {
+          id: data.speech_id,
+          title: "Practice session",
+          started_at: new Date().toISOString(),
+          last_message: "",
+          last_message_at: new Date().toISOString(),
+          time_label: "Now",
+          unread_count: 0,
+        };
+
+        state.speeches.unshift(newSpeech);
+        state.activeSpeechId = newSpeech.id;
+        state.speechMessages[newSpeech.id] = [];
+        renderChatList();
+        renderAiMessages();
+      }
+
       function showTopicPills() {
         chatPillsContainer.innerHTML = `
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Business"
-          >
-            ◇ Business
-          </button>
-
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Technology"
-          >
-            ◉ Tech
-          </button>
-
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Marketing"
-          >
-            ✦ Marketing
-          </button>
-
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Design"
-          >
-            ◌ Design
-          </button>
-
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Education"
-          >
-            Aa Education
-          </button>
-
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Finance"
-          >
-            $ Finance
-          </button>
-
-          <button
-            type="button"
-            class="chat-pill"
-            data-prompt="Personal growth"
-          >
-            ✧ Personal
-          </button>
+          <button type="button" class="chat-pill" data-prompt="Business">◇ Business</button>
+          <button type="button" class="chat-pill" data-prompt="Technology">◉ Tech</button>
+          <button type="button" class="chat-pill" data-prompt="Marketing">✦ Marketing</button>
+          <button type="button" class="chat-pill" data-prompt="Design">◌ Design</button>
+          <button type="button" class="chat-pill" data-prompt="Education">Aa Education</button>
+          <button type="button" class="chat-pill" data-prompt="Finance">$ Finance</button>
+          <button type="button" class="chat-pill" data-prompt="Personal growth">✧ Personal</button>
         `;
 
         attachChatPillListeners();
@@ -1977,209 +2046,176 @@
 
             if (isSelected) {
               const currentText = messageInput.value.trim();
-
-              messageInput.value = currentText
-                ? `${currentText} ${prompt}`
-                : prompt;
+              messageInput.value = currentText ? `${currentText} ${prompt}` : prompt;
             } else {
               const promptPattern = new RegExp(`\\s*${prompt}`, "g");
-
               messageInput.value = messageInput.value
                 .replace(promptPattern, "")
-                .replace(/\s{2,}/g, " ")
+                .replace(/\\s{2,}/g, " ")
                 .trim();
             }
 
             messageInput.focus();
-            messageInput.setSelectionRange(
-              messageInput.value.length,
-              messageInput.value.length
-            );
+            messageInput.setSelectionRange(messageInput.value.length, messageInput.value.length);
           });
         });
       }
 
-      /* AI Chat history */
-
-      function attachChatListener(chat) {
-        chat.addEventListener("click", () => {
-          document
-            .querySelectorAll(".chat-item")
-            .forEach((item) => item.classList.remove("active-chat"));
-
-          chat.classList.add("active-chat");
-          renderAiChat(chat.dataset.chat);
-        });
-      }
-
-      document.querySelectorAll(".chat-item").forEach(attachChatListener);
-
-      newChatButton.addEventListener("click", () => {
-        const newChat = document.createElement("button");
-
-        newChat.className = "chat-item active-chat";
-        newChat.dataset.chat = "New conversation";
-
-        newChat.innerHTML = `
-          <span class="chat-status"></span>
-          <span class="chat-title">New conversation</span>
-          <span class="chat-time">Now</span>
-        `;
-
-        document
-          .querySelectorAll(".chat-item")
-          .forEach((item) => item.classList.remove("active-chat"));
-
-        chatList.prepend(newChat);
-        attachChatListener(newChat);
-        renderAiChat("New conversation");
-      });
-
-      /* Selectable AI Chat pills */
-
-      attachChatPillListeners();
-
-      messageForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        const text = messageInput.value.trim();
-
-        if (!text) {
+      async function loadDashboard() {
+        if (!token()) {
+          state.unauthenticated = true;
+          renderProfile();
+          chatList.innerHTML = '<div class="chat-item"><span class="chat-title">Sign in to load chats</span></div>';
+          renderAiStatus("Please sign in from the main web app to load your AI chat history.");
+          dmUserList.innerHTML = '<div class="dm-user"><span class="dm-user-info"><strong>Sign in to load contacts</strong></span></div>';
+          renderDmStatus("Please sign in to view mentor contacts.");
+          messageInput.disabled = true;
+          dmMessageInput.disabled = true;
           return;
         }
 
-        const hasSelectedPill = [...chatPills].some((pill) =>
-          pill.classList.contains("selected")
-        );
+        try {
+          const bootstrap = await apiRequest("/dashboard/bootstrap");
+          state.user = bootstrap.user || null;
+          state.speeches = Array.isArray(bootstrap.speeches) ? bootstrap.speeches : [];
+          state.contacts = Array.isArray(bootstrap.contacts) ? bootstrap.contacts : [];
+          state.activeSpeechId = bootstrap.active_speech_id || state.speeches[0]?.id || null;
+          state.activeContactId = bootstrap.active_contact_id || state.contacts[0]?.id || null;
 
-        addAiUserMessage(text);
+          renderProfile();
+          renderChatList();
+          renderContacts();
+          updateUnreadBadges();
 
-        messageInput.value = "";
-        messageInput.placeholder = "Message Heard AI...";
+          if (state.activeSpeechId) {
+            await loadSpeechMessages(state.activeSpeechId, true);
+          } else {
+            renderAiMessages();
+          }
 
-        chatPills.forEach((pill) => {
-          pill.classList.remove("selected");
-        });
+          await renderDirectMessages();
+        } catch (error) {
+          const unauth = error.status === 401;
+          state.unauthenticated = unauth;
+          const message = unauth
+            ? "Please sign in from the main web app to load your data."
+            : `Could not load dashboard data: ${error.message}`;
 
-        messages.scrollTop = messages.scrollHeight;
+          chatList.innerHTML = `<div class="chat-item"><span class="chat-title">${message}</span></div>`;
+          dmUserList.innerHTML = `<div class="dm-user"><span class="dm-user-info"><strong>${message}</strong></span></div>`;
+          renderAiStatus(message);
+          renderDmStatus(message);
+          messageInput.disabled = true;
+          dmMessageInput.disabled = true;
+        }
+      }
 
-        if (hasSelectedPill && !topicFlowStarted) {
-          topicFlowStarted = true;
+      attachChatPillListeners();
 
-          window.setTimeout(() => {
-            addAiAssistantMessage(
-              "Thanks! Pick a topic below if it is relevant to your message, or enter your own message in the text box!"
-            );
+      messageForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const text = messageInput.value.trim();
+        if (!text) return;
 
-            showTopicPills();
-            messages.scrollTop = messages.scrollHeight;
-          }, 650);
+        if (!state.activeSpeechId) {
+          try {
+            await createNewSpeech();
+          } catch (error) {
+            renderAiStatus(`Could not start a new chat: ${error.message}`);
+            return;
+          }
+        }
+
+        try {
+          await apiRequest(`/speech/${state.activeSpeechId}/chat`, {
+            method: "POST",
+            body: JSON.stringify({ message: text, phase: "preptalk" }),
+          });
+
+          messageInput.value = "";
+          messageInput.placeholder = "Message Heard AI...";
+          chatPills.forEach((pill) => pill.classList.remove("selected"));
+          await loadSpeechMessages(state.activeSpeechId, true);
+        } catch (error) {
+          renderAiStatus(`Could not send message: ${error.message}`);
         }
       });
 
-      /* Main navigation */
+      newChatButton.addEventListener("click", async () => {
+        try {
+          await createNewSpeech();
+          showTopicPills();
+        } catch (error) {
+          renderAiStatus(`Could not create new chat: ${error.message}`);
+        }
+      });
 
       sectionLinks.forEach((link) => {
         link.addEventListener("click", () => {
           const selectedPage = link.dataset.page;
-
           updateActiveSection(selectedPage);
 
-          if (selectedPage === "AI Chat") {
-            showAIChatView();
-          }
-
-          if (selectedPage === "Channel") {
-            showChannelView();
-          }
-
-          if (selectedPage === "DMs") {
-            showDMView();
-          }
+          if (selectedPage === "AI Chat") showAIChatView();
+          if (selectedPage === "Channel") showChannelView();
+          if (selectedPage === "DMs") showDMView();
         });
       });
 
       compactButtons.forEach((button) => {
         button.addEventListener("click", () => {
           const selectedPage = button.dataset.page;
-
           updateActiveSection(selectedPage);
 
-          if (selectedPage === "Channel") {
-            showChannelView();
-          }
-
-          if (selectedPage === "DMs") {
-            showDMView();
-          }
+          if (selectedPage === "Channel") showChannelView();
+          if (selectedPage === "DMs") showDMView();
         });
       });
 
-      /* Direct messages */
-
-      dmUsers.forEach((userButton) => {
-        userButton.addEventListener("click", () => {
-          dmUsers.forEach((item) => {
-            item.classList.remove("active-dm-user");
-          });
-
-          userButton.classList.add("active-dm-user");
-          renderDirectMessages(userButton.dataset.user);
-        });
-      });
-
-      dmMessageForm.addEventListener("submit", (event) => {
+      dmMessageForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-
         const text = dmMessageInput.value.trim();
-        const userName = activeDmName.textContent;
-        const contact = dmContacts[userName];
+        const contact = state.contacts.find((item) => item.id === state.activeContactId);
 
-        if (!text || !contact) {
+        if (!text || !contact) return;
+        if (!contact.speech_id) {
+          renderDmStatus("This contact has no speech thread yet.");
           return;
         }
 
-        contact.messages.push({
-          type: "sent",
-          time: "Now",
-          text
-        });
-
-        renderDirectMessages(userName);
-        dmMessageInput.value = "";
-
-        window.setTimeout(() => {
-          const responseText =
-            "Thanks for your message! I’ll get back to you shortly.";
-
-          contact.messages.push({
-            type: "received",
-            time: "Now",
-            text: responseText
+        try {
+          await apiRequest(`/speech/${contact.speech_id}/chat`, {
+            method: "POST",
+            body: JSON.stringify({ message: text, phase: "talksummary" }),
           });
 
-          addDmMessage(
-            "received",
-            responseText,
-            contact.initials,
-            contact.colorClass,
-            "Now"
-          );
+          dmMessageInput.value = "";
+          await loadSpeechMessages(contact.speech_id, true);
 
-          dmMessages.scrollTop = dmMessages.scrollHeight;
-        }, 900);
-      });
+          if (state.activeSpeechId === contact.speech_id) {
+            renderAiMessages();
+          }
 
-      document.getElementById("newDmButton").addEventListener("click", () => {
-        const firstUser = document.querySelector(".dm-user");
+          await renderDirectMessages();
 
-        if (firstUser) {
-          firstUser.click();
-          dmMessageInput.focus();
+          const updatedContact = state.contacts.find((item) => item.id === contact.id);
+          if (updatedContact) {
+            updatedContact.preview = text;
+          }
+          renderContacts();
+        } catch (error) {
+          renderDmStatus(`Could not send message: ${error.message}`);
         }
       });
 
-      /* Channel interactions */
+      document.getElementById("newDmButton").addEventListener("click", () => {
+        const firstContact = state.contacts[0];
+        if (!firstContact) return;
+
+        state.activeContactId = firstContact.id;
+        renderContacts();
+        renderDirectMessages();
+        dmMessageInput.focus();
+      });
 
       document.querySelectorAll(".dm-button").forEach((button) => {
         button.addEventListener("click", () => {
@@ -2198,82 +2234,60 @@
         });
       });
 
-      document
-        .getElementById("createPostButton")
-        .addEventListener("click", () => {
-          const post = document.createElement("article");
-
-          post.className = "post-card";
-          post.innerHTML = `
-            <div class="post-header">
-              <div class="post-user">
-                <div class="post-avatar pink-avatar">AS</div>
-
-                <div>
-                  <h2>You</h2>
-                  <span>Just now</span>
-                </div>
+      document.getElementById("createPostButton").addEventListener("click", () => {
+        const post = document.createElement("article");
+        post.className = "post-card";
+        post.innerHTML = `
+          <div class="post-header">
+            <div class="post-user">
+              <div class="post-avatar pink-avatar">AS</div>
+              <div>
+                <h2>You</h2>
+                <span>Just now</span>
               </div>
-
-              <button class="post-menu" aria-label="Post options">
-                •••
-              </button>
             </div>
-
-            <p class="post-description">
-              A new post is ready to be filled with your shared resource.
-            </p>
-
-            <div class="file-tile pdf-file">
-              <div class="file-icon">PDF</div>
-
-              <div class="file-info">
-                <strong>New shared resource</strong>
-                <span>PDF document · Ready to upload</span>
-              </div>
-
-              <button class="file-action" aria-label="Open PDF">
-                ↗
-              </button>
+            <button class="post-menu" aria-label="Post options">•••</button>
+          </div>
+          <p class="post-description">A new post is ready to be filled with your shared resource.</p>
+          <div class="file-tile pdf-file">
+            <div class="file-icon">PDF</div>
+            <div class="file-info">
+              <strong>New shared resource</strong>
+              <span>PDF document · Ready to upload</span>
             </div>
+            <button class="file-action" aria-label="Open PDF">↗</button>
+          </div>
+          <div class="post-categories">
+            <span class="category-tile">New</span>
+            <span class="category-tile">Shared resource</span>
+          </div>
+          <div class="post-actions">
+            <button class="post-action">♡ 0</button>
+            <button class="post-action">💬 0</button>
+            <button class="dm-button">DM</button>
+          </div>
+        `;
 
-            <div class="post-categories">
-              <span class="category-tile">New</span>
-              <span class="category-tile">Shared resource</span>
-            </div>
+        document.getElementById("channelFeed").prepend(post);
 
-            <div class="post-actions">
-              <button class="post-action">♡ 0</button>
-              <button class="post-action">💬 0</button>
-              <button class="dm-button">DM</button>
-            </div>
-          `;
-
-          document.getElementById("channelFeed").prepend(post);
-
-          post.querySelector(".dm-button").addEventListener("click", (event) => {
-            event.currentTarget.textContent = "Message opened";
-          });
-
-          post
-            .querySelector(".file-action")
-            .addEventListener("click", (event) => {
-              const button = event.currentTarget;
-              const originalText = button.textContent;
-
-              button.textContent = "✓";
-
-              window.setTimeout(() => {
-                button.textContent = originalText;
-              }, 1200);
-            });
+        post.querySelector(".dm-button").addEventListener("click", (event) => {
+          event.currentTarget.textContent = "Message opened";
         });
 
-      /* Initial state */
+        post.querySelector(".file-action").addEventListener("click", (event) => {
+          const button = event.currentTarget;
+          const originalText = button.textContent;
+          button.textContent = "✓";
 
-      renderDirectMessages("Maya Chen");
+          window.setTimeout(() => {
+            button.textContent = originalText;
+          }, 1200);
+        });
+      });
+
       showAIChatView();
       updateActiveSection("AI Chat");
+      loadDashboard();
     </script>
   </body>
 </html>

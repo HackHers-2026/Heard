@@ -73,6 +73,10 @@ export const api = {
   getChat: (speechId: string, phase?: Phase) =>
     request<{ messages: any[] }>(`/speech/${speechId}/chat${phase ? `?phase=${phase}` : ""}`),
 
+
+  // --- Standalone dashboard bootstrap ---
+  dashboardBootstrap: () => request<any>("/dashboard/bootstrap"),
+
   // --- Community feed ---
   feed: (careerTag?: string) =>
     request<{ posts: any[]; next_cursor: string | null }>(
