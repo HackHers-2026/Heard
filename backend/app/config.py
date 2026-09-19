@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # ElevenLabs
     elevenlabs_api_key: str = ""
     elevenlabs_stt_model: str = "scribe_v1"
+    # Realtime (streaming) speech-to-text used by the extension side panel.
+    elevenlabs_realtime_model: str = "scribe_v2_realtime"
+    elevenlabs_stt_ws_url: str = "wss://api.elevenlabs.io/v1/speech-to-text/realtime"
 
     # Backboard (memory)
     backboard_api_key: str = ""

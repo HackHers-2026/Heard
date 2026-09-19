@@ -2,25 +2,20 @@
   "manifest_version": 3,
   "name": "Heard — Live Pitch Coach",
   "version": "0.1.0",
-  "description": "Practice your pitch over Google Slides and get live, encouraging AI feedback.",
-  "permissions": ["activeTab", "scripting", "storage", "tabCapture"],
+  "description": "A sidebar that records your speech and transcribes it live so you can practice being heard.",
+  "permissions": ["storage", "sidePanel"],
   "host_permissions": [
     "http://localhost:8000/*",
-    "https://docs.google.com/*"
+    "ws://localhost:8000/*"
   ],
   "action": {
-    "default_popup": "popup/popup.html",
-    "default_title": "Heard"
+    "default_title": "Open Heard"
+  },
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
   },
   "background": {
     "service_worker": "src/background.js",
     "type": "module"
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://docs.google.com/presentation/*"],
-      "js": ["src/content.js"],
-      "css": ["src/overlay.css"]
-    }
-  ]
+  }
 }

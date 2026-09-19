@@ -1,5 +1,16 @@
-// Service worker: owns auth token + all network calls so content scripts stay thin.
+// Service worker.
+// 1) Makes the Heard side panel open on ANY tab when the toolbar icon is clicked.
+// 2) Owns auth token + REST calls used by later steps (login, sessions, feedback).
+//    The live speech-to-text stream is handled directly in the side panel over a
+//    WebSocket — see sidepanel/sidepanel.js.
 import { API_BASE } from "./config.js";
+
+// Open the side panel on the current tab when the user clicks the toolbar icon.
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: true })
+    .catch((err) => console.error("sidePanel behavior:", err));
+});
 
 async function getToken() {
   const { heard_token } = await chrome.storage.local.get("heard_token");
@@ -15,7 +26,7 @@ async function authedFetch(path, options = {}) {
   return res.json();
 }
 
-// Message router for popup + content script.
+// Message router used by the side panel for REST calls (auth/sessions/feedback).
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   (async () => {
     try {
@@ -40,21 +51,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           });
           await chrome.storage.local.set({ heard_active_session: run.id });
           sendResponse({ ok: true, session: run });
-          break;
-        }
-        case "LIVE_FEEDBACK": {
-          const fb = await authedFetch("/feedback/live", {
-            method: "POST",
-            body: JSON.stringify({ session_id: msg.sessionId, text: msg.text }),
-          });
-          sendResponse({ ok: true, feedback: fb });
-          break;
-        }
-        case "SUMMARIZE": {
-          const summary = await authedFetch(`/feedback/summarize?session_id=${msg.sessionId}`, {
-            method: "POST",
-          });
-          sendResponse({ ok: true, summary });
           break;
         }
         default:

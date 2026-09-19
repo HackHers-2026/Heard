@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="head">
+      <span class="dot"></span>
+      <h1>Heard</h1>
+      <span id="conn" class="conn" title="Connection status">●</span>
+    </header>
+
+    <p class="sub">Record yourself practicing — your words appear live below.</p>
+
+    <div class="controls">
+      <button id="start" class="primary">Start recording</button>
+      <button id="stop" class="danger" disabled>Stop</button>
+      <button id="clear" class="ghost">Clear</button>
+    </div>
+
+    <p id="status" class="status">Click “Start recording” and allow microphone access.</p>
+
+    <section class="transcript-wrap">
+      <div class="transcript-head">
+        <span>Transcript</span>
+        <span id="meter" class="meter" aria-hidden="true"></span>
+      </div>
+      <div id="transcript" class="transcript">
+        <span class="placeholder">Your live transcript will show up here…</span>
+      </div>
+    </section>
+
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>
