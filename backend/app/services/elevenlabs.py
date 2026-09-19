@@ -48,10 +48,13 @@ async def transcribe_audio(audio_bytes: bytes, content_type: str = "audio/webm")
 # ---------------------------------------------------------------------------
 # Realtime streaming proxy
 # ---------------------------------------------------------------------------
-async def proxy_realtime_stt(client_ws) -> None:
+async def proxy_realtime_stt(client_ws, on_transcript=None) -> None:
     """Bridge the extension's audio WebSocket <-> ElevenLabs realtime STT.
 
     `client_ws` is a Starlette/FastAPI WebSocket that is already accepted.
+    `on_transcript`, if given, is an async callable (text: str, is_final: bool)
+    invoked for every transcript frame — used to persist 1-minute segments.
+
     Protocol with the extension:
       - client -> server: first a JSON text frame {"type":"start","sample_rate":16000},
         then binary frames of 16kHz mono PCM (Int16 LE), then {"type":"stop"}.
@@ -59,17 +62,24 @@ async def proxy_realtime_stt(client_ws) -> None:
         or {"type":"error","detail":str}.
     """
     if not settings.elevenlabs_api_key:
-        await _stub_stream(client_ws)
+        await _stub_stream(client_ws, on_transcript)
         return
 
     try:
-        await _elevenlabs_bridge(client_ws)
+        await _elevenlabs_bridge(client_ws, on_transcript)
     except Exception as exc:  # keep the panel informed instead of a silent drop
         logger.exception("realtime STT bridge failed")
         await _safe_send(client_ws, {"type": "error", "detail": str(exc)})
 
 
-async def _elevenlabs_bridge(client_ws) -> None:
+async def _emit_transcript(client_ws, parsed: dict, on_transcript) -> None:
+    """Send a transcript frame to the client and forward it to the segmenter."""
+    await _safe_send(client_ws, parsed)
+    if on_transcript and parsed.get("type") == "transcript":
+        await on_transcript(parsed.get("text", ""), parsed.get("is_final", False))
+
+
+async def _elevenlabs_bridge(client_ws, on_transcript=None) -> None:
     """Relay extension PCM audio to ElevenLabs Scribe v2 Realtime.
 
     ElevenLabs expects audio as JSON frames carrying base64 PCM
@@ -125,7 +135,7 @@ async def _elevenlabs_bridge(client_ws) -> None:
                 parsed = _parse_el_message(raw)
 
                 if parsed:
-                    await _safe_send(client_ws, parsed)
+                    await _emit_transcript(client_ws, parsed, on_transcript)
 
         audio_task = asyncio.create_task(pump_audio_to_el())
         transcript_task = asyncio.create_task(
@@ -179,7 +189,7 @@ def _parse_el_message(raw) -> dict | None:
     return None
 
 
-async def _stub_stream(client_ws) -> None:
+async def _stub_stream(client_ws, on_transcript=None) -> None:
     """No-key fallback: emit a growing canned transcript so the UI/pipeline works.
 
     Drains incoming audio so the socket doesn't stall, and emits interim words
@@ -206,9 +216,10 @@ async def _stub_stream(client_ws) -> None:
             built.append(words[i % len(words)])
             i += 1
             is_final = i % 7 == 0
-            await _safe_send(
+            await _emit_transcript(
                 client_ws,
                 {"type": "transcript", "text": " ".join(built), "is_final": is_final},
+                on_transcript,
             )
             if is_final:
                 built = []

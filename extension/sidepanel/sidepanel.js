@@ -68,7 +68,7 @@ async function start() {
     return; // acquireMic already set an explanatory status
   }
 
-  openSocket();
+  await openSocket();
   await startAudioGraph();
 
   els.stop.disabled = false;
@@ -150,8 +150,16 @@ async function stop() {
 // ---------------------------------------------------------------------------
 // WebSocket to backend (which proxies ElevenLabs Scribe realtime v2)
 // ---------------------------------------------------------------------------
-function openSocket() {
-  ws = new WebSocket(STT_WS_URL);
+async function openSocket() {
+  // If the user is signed in, pass their Supabase JWT so the backend attributes
+  // the session to their real account. Browsers can't set WS headers, so we use
+  // a query param. No token => backend records under the demo user.
+  const { heard_token } = await chrome.storage.local.get("heard_token");
+  const url = heard_token
+    ? `${STT_WS_URL}?token=${encodeURIComponent(heard_token)}`
+    : STT_WS_URL;
+
+  ws = new WebSocket(url);
   ws.binaryType = "arraybuffer";
 
   ws.onopen = () => {

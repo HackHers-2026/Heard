@@ -17,5 +17,12 @@
   "background": {
     "service_worker": "src/background.js",
     "type": "module"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost:5173/*"],
+      "js": ["src/webapp-bridge.js"],
+      "run_at": "document_idle"
+    }
+  ]
 }
