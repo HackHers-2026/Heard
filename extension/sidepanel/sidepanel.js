@@ -16,6 +16,7 @@ const els = {
   clear: document.getElementById("clear"),
   status: document.getElementById("status"),
   transcript: document.getElementById("transcript"),
+  coaching: document.getElementById("coaching"),
   conn: document.getElementById("conn"),
   meter: document.getElementById("meter"),
 };
@@ -53,13 +54,22 @@ els.clear.addEventListener("click", async () => {
   interimText = "";
   await chrome.storage.session.remove(STORAGE_KEY);
   render();
+  resetCoaching();
 });
+
+const COACHING_PLACEHOLDER =
+  '<span class="placeholder">Your coaching feedback will appear here after the first segment…</span>';
+
+function resetCoaching() {
+  els.coaching.innerHTML = COACHING_PLACEHOLDER;
+}
 
 // ---------------------------------------------------------------------------
 // Recording lifecycle
 // ---------------------------------------------------------------------------
 async function start() {
   els.start.disabled = true;
+  resetCoaching();
   setStatus("Requesting microphone…");
 
   mediaStream = await acquireMic();
@@ -137,14 +147,18 @@ async function stop() {
     persist();
     render();
   }
+  // Tell the backend we're done, but DON'T close the socket ourselves: the
+  // backend flushes the final segment, runs Backboard/Gemini, and pushes the
+  // last coaching frame before closing the connection (handled in ws.onclose).
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: "stop" }));
-    ws.close();
+    setStatus("Finishing session and generating coaching…");
+  } else {
+    ws = null;
+    setConn(false);
+    els.start.disabled = false;
+    setStatus("Stopped. Transcript saved for this session.");
   }
-  ws = null;
-  setConn(false);
-  els.start.disabled = false;
-  setStatus("Stopped. Transcript saved for this session.");
 }
 
 // ---------------------------------------------------------------------------
@@ -173,11 +187,45 @@ async function openSocket() {
     } catch {
       return;
     }
-    if (msg.type === "transcript") handleTranscript(msg);
-    else if (msg.type === "error") setStatus(`Transcription error: ${msg.detail || "unknown"}`);
+    if (msg.type === "transcript") {
+      handleTranscript(msg);
+    } else if (msg.type === "coaching") {
+      handleCoaching(msg);
+    } else if (msg.type === "session") {
+      console.log("Heard session:", msg.speech_id);
+    } else if (msg.type === "error") {
+      setStatus(`Error: ${msg.detail || "unknown"}`);
+    }
   };
-  ws.onclose = () => setConn(false);
+  // The backend keeps the socket open after "stop" to flush the final segment
+  // and generate its coaching, then closes it itself — so treat onclose as the
+  // real end of the session.
+  ws.onclose = () => {
+    setConn(false);
+    ws = null;
+    els.start.disabled = false;
+    els.stop.disabled = true;
+    setStatus("Session complete.");
+  };
   ws.onerror = () => setStatus("Could not reach the transcription server (is the backend running?).");
+}
+
+function handleCoaching(msg) {
+  const nudge = msg.nudge || "Keep going.";
+  const focus = msg.focus_area || "general";
+  const progress = msg.progress || "";
+  const goal = msg.next_minute_goal || "";
+
+  els.coaching.innerHTML = `
+    <div class="coaching-card">
+      <span class="coaching-focus">${escapeHtml(focus)}</span>
+      <strong class="coaching-nudge">${escapeHtml(nudge)}</strong>
+      ${progress ? `<p class="coaching-progress">${escapeHtml(progress)}</p>` : ""}
+      ${goal ? `<p class="coaching-goal"><b>Next:</b> ${escapeHtml(goal)}</p>` : ""}
+    </div>
+  `;
+
+  setStatus("Live coaching updated.");
 }
 
 function handleTranscript({ text, is_final }) {

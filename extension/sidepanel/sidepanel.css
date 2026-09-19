@@ -58,3 +58,20 @@ button:disabled { opacity: 0.5; cursor: default; }
 .transcript .placeholder { color: var(--off); }
 .transcript .final { color: var(--ink); }
 .transcript .interim { color: var(--muted); font-style: italic; }
+
+/* ---- Live Coaching (Backboard + Gemini feedback) ---- */
+.feedback-wrap {
+  border: 1px solid var(--border); border-radius: 12px;
+  background: #fff; overflow: hidden;
+}
+.coaching { padding: 14px; min-height: 90px; }
+.coaching .placeholder { color: var(--off); font-size: 13px; }
+.coaching-card { display: flex; flex-direction: column; gap: 8px; }
+.coaching-focus {
+  width: fit-content; padding: 3px 9px; border-radius: 999px;
+  background: var(--brand-soft); color: var(--brand);
+  font-size: 11px; font-weight: 700; text-transform: capitalize; letter-spacing: 0.02em;
+}
+.coaching-nudge { font-size: 15px; line-height: 1.4; color: var(--ink); }
+.coaching-progress, .coaching-goal { margin: 0; font-size: 13px; line-height: 1.4; color: var(--muted); }
+.coaching-goal b { color: var(--ink); }
