@@ -7,18 +7,23 @@
 
     <style>
       :root {
-        --cream: #fcf5f6;
-        --pink-light: #f8c0df;
-        --pink: #f9b4c0;
-        --coral-light: #fe979c;
-        --coral: #ff9288;
-        --mauve: #96617d;
-        --magenta: #aa1d6a;
+        --red: #f40202;
+        --red-orange: #ff4002;
+        --orange-dark: #ff5800;
+        --orange: #ff5d01;
+        --orange-medium: #ff6400;
+        --orange-light: #fd8002;
+        --gold-dark: #ff9c04;
+        --gold: #ffa503;
+        --yellow-orange: #ffa800;
+        --yellow: #ffab00;
+
         --white: #ffffff;
-        --text-dark: #4d2940;
-        --text-muted: #8c657b;
-        --border: rgba(150, 97, 125, 0.16);
-        --online: #68bd8a;
+        --page-bg: #fffaf3;
+        --text-dark: #4a1608;
+        --text-muted: #a64016;
+        --border: rgba(244, 2, 2, 0.18);
+        --online: #35a866;
       }
 
       * {
@@ -39,10 +44,16 @@
         background:
           radial-gradient(
             circle at 90% 10%,
-            rgba(248, 192, 223, 0.6),
+            rgba(255, 168, 0, 0.32),
             transparent 30%
           ),
-          linear-gradient(135deg, var(--cream), #fff8fa);
+          linear-gradient(
+            135deg,
+            rgba(255, 171, 0, 0.16),
+            rgba(255, 93, 1, 0.12),
+            rgba(244, 2, 2, 0.08)
+          ),
+          var(--page-bg);
       }
 
       button,
@@ -73,11 +84,15 @@
         background:
           linear-gradient(
             180deg,
-            rgba(255, 255, 255, 0.7),
-            rgba(252, 245, 246, 0.92)
+            rgba(255, 168, 0, 0.16),
+            rgba(255, 93, 1, 0.26)
           ),
-          linear-gradient(145deg, var(--pink-light), var(--cream));
-        box-shadow: 10px 0 35px rgba(150, 97, 125, 0.08);
+          linear-gradient(
+            145deg,
+            rgba(255, 207, 207, 0.16),
+            rgba(255, 243, 220, 0.3)
+          );
+        box-shadow: 10px 0 35px rgba(244, 2, 2, 0.08);
         backdrop-filter: blur(18px);
       }
 
@@ -95,10 +110,15 @@
         place-items: center;
         flex-shrink: 0;
         border-radius: 14px;
-        background: linear-gradient(135deg, var(--magenta), var(--coral));
+        background: linear-gradient(
+          135deg,
+          var(--red),
+          var(--red-orange),
+          var(--yellow)
+        );
         color: var(--white);
         font-weight: 800;
-        box-shadow: 0 8px 18px rgba(170, 29, 106, 0.22);
+        box-shadow: 0 8px 18px rgba(244, 2, 2, 0.22);
       }
 
       .brand-copy {
@@ -151,7 +171,7 @@
       .chat-list::-webkit-scrollbar-thumb,
       .dm-user-list::-webkit-scrollbar-thumb {
         border-radius: 20px;
-        background: rgba(150, 97, 125, 0.3);
+        background: rgba(255, 100, 0, 0.42);
       }
 
       .chat-item {
@@ -164,27 +184,27 @@
         border: 0;
         border-radius: 12px;
         background: transparent;
-        color: var(--mauve);
+        color: var(--text-muted);
         text-align: left;
         transition: 0.2s ease;
       }
 
       .chat-item:hover,
       .chat-item.active-chat {
-        background: rgba(255, 255, 255, 0.65);
-        color: var(--magenta);
+        background: rgba(255, 255, 255, 0.75);
+        color: #b70707;
       }
 
       .chat-status {
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: var(--pink);
+        background: var(--gold);
       }
 
       .active-chat .chat-status {
-        background: var(--magenta);
-        box-shadow: 0 0 0 4px rgba(170, 29, 106, 0.1);
+        background: var(--red);
+        box-shadow: 0 0 0 4px rgba(244, 2, 2, 0.12);
       }
 
       .chat-title {
@@ -209,17 +229,17 @@
         margin-top: 12px;
         margin-bottom: 12px;
         padding: 10px;
-        border: 1px dashed rgba(170, 29, 106, 0.35);
+        border: 1px dashed rgba(244, 2, 2, 0.38);
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.35);
-        color: var(--magenta);
+        background: rgba(255, 255, 255, 0.44);
+        color: #b70707;
         font-size: 0.78rem;
         font-weight: 800;
       }
 
       .new-chat-button:hover,
       .new-dm-button:hover {
-        background: rgba(255, 255, 255, 0.72);
+        background: rgba(255, 255, 255, 0.8);
       }
 
       .section-navigation {
@@ -237,7 +257,7 @@
         border: 0;
         border-radius: 14px;
         background: transparent;
-        color: var(--mauve);
+        color: var(--text-muted);
         font-size: 0.82rem;
         font-weight: 800;
         text-align: left;
@@ -245,19 +265,24 @@
       }
 
       .section-link:hover {
-        background: rgba(255, 255, 255, 0.7);
-        color: var(--magenta);
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--red);
       }
 
       .section-link.active-section {
-        background: linear-gradient(135deg, var(--magenta), var(--coral-light));
+        background: linear-gradient(
+          135deg,
+          var(--red),
+          var(--red-orange),
+          var(--orange)
+        );
         color: var(--white);
-        box-shadow: 0 10px 22px rgba(170, 29, 106, 0.2);
+        box-shadow: 0 10px 22px rgba(244, 2, 2, 0.2);
       }
 
       .section-link.active-section .notification {
         background: var(--white);
-        color: var(--magenta);
+        color: var(--red);
       }
 
       .compact-section-link {
@@ -288,7 +313,7 @@
         padding: 0 6px;
         place-items: center;
         border-radius: 999px;
-        background: var(--magenta);
+        background: var(--red);
         color: var(--white);
         font-size: 0.68rem;
         font-weight: 800;
@@ -310,15 +335,15 @@
         border: 0;
         border-radius: 12px;
         background: transparent;
-        color: var(--mauve);
+        color: var(--text-muted);
         font-size: 0.8rem;
         font-weight: 700;
         text-align: left;
       }
 
       .compact-nav-button:hover {
-        background: rgba(255, 255, 255, 0.6);
-        color: var(--magenta);
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--red);
       }
 
       .compact-nav-button .notification {
@@ -340,15 +365,15 @@
         border: 0;
         border-radius: 13px;
         background: transparent;
-        color: var(--mauve);
+        color: var(--text-muted);
         text-align: left;
         transition: 0.2s ease;
       }
 
       .dm-user:hover,
       .dm-user.active-dm-user {
-        background: rgba(255, 255, 255, 0.68);
-        color: var(--magenta);
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--red);
       }
 
       .dm-avatar {
@@ -409,7 +434,7 @@
         height: 18px;
         place-items: center;
         border-radius: 999px;
-        background: var(--magenta);
+        background: var(--red);
         color: var(--white);
         font-size: 0.6rem;
         font-weight: 800;
@@ -424,9 +449,9 @@
         align-items: center;
         gap: 11px;
         padding: 12px;
-        border: 1px solid rgba(150, 97, 125, 0.12);
+        border: 1px solid rgba(244, 2, 2, 0.14);
         border-radius: 18px;
-        background: rgba(255, 255, 255, 0.62);
+        background: rgba(255, 255, 255, 0.68);
       }
 
       .avatar {
@@ -436,7 +461,12 @@
         flex-shrink: 0;
         place-items: center;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--coral), var(--magenta));
+        background: linear-gradient(
+          135deg,
+          var(--red-orange),
+          var(--orange),
+          var(--yellow)
+        );
         color: var(--white);
         font-weight: 800;
       }
@@ -466,11 +496,11 @@
         margin-left: auto;
         border: 0;
         background: transparent;
-        color: var(--mauve);
+        color: var(--text-muted);
         font-size: 1.15rem;
       }
 
-      /* Full-page main layout */
+      /* Main layout */
 
       .main-content {
         display: flex;
@@ -493,7 +523,6 @@
         border-radius: 0;
         background: transparent;
         box-shadow: none;
-        backdrop-filter: none;
       }
 
       .chat-panel {
@@ -510,8 +539,8 @@
         align-items: center;
         justify-content: space-between;
         padding: 27px 40px;
-        border-bottom: 1px solid rgba(150, 97, 125, 0.12);
-        background: rgba(255, 255, 255, 0.22);
+        border-bottom: 1px solid rgba(244, 2, 2, 0.12);
+        background: rgba(255, 255, 255, 0.28);
       }
 
       .dm-header {
@@ -520,7 +549,7 @@
 
       .chat-breadcrumb {
         margin-bottom: 5px;
-        color: var(--magenta);
+        color: var(--red);
         font-size: 0.72rem;
         font-weight: 800;
         letter-spacing: 0.12em;
@@ -536,7 +565,7 @@
       .header-action {
         border: 0;
         background: transparent;
-        color: var(--mauve);
+        color: var(--text-muted);
         font-size: 1.1rem;
       }
 
@@ -568,14 +597,24 @@
         flex-shrink: 0;
         place-items: center;
         border-radius: 12px;
-        background: linear-gradient(135deg, var(--magenta), var(--coral));
+        background: linear-gradient(
+          135deg,
+          var(--red),
+          var(--red-orange),
+          var(--orange)
+        );
         color: var(--white);
         font-size: 0.9rem;
         font-weight: 800;
       }
 
       .user-message .message-avatar {
-        background: linear-gradient(135deg, var(--coral), var(--pink));
+        background: linear-gradient(
+          135deg,
+          var(--orange-medium),
+          var(--gold-dark),
+          var(--yellow)
+        );
       }
 
       .message-content {
@@ -585,24 +624,28 @@
       .message-author {
         display: block;
         margin: 2px 0 7px;
-        color: var(--mauve);
+        color: var(--text-muted);
         font-size: 0.75rem;
         font-weight: 800;
       }
 
       .message-content p {
         padding: 14px 17px;
-        border-radius: 4px 18px 18px 18px;
-        background: rgba(248, 192, 223, 0.28);
-        color: var(--text-dark);
+        border-radius: 4px 12px 12px 12px;
+        background: linear-gradient(
+          115deg,
+          #ff4002,
+          #fb5d08
+        );
+        color: rgb(255, 255, 255);
         font-size: 0.92rem;
         line-height: 1.65;
       }
 
       .user-message .message-content p {
         border-radius: 18px 4px 18px 18px;
-        background: linear-gradient(135deg, var(--magenta), var(--coral-light));
-        color: var(--white);
+        background: #ff5d0030;
+        color: rgb(71, 25, 0);
       }
 
       /* Chat pills */
@@ -616,10 +659,10 @@
 
       .chat-pill {
         padding: 9px 13px;
-        border: 1px solid rgba(170, 29, 106, 0.18);
+        border: 1px solid rgba(244, 2, 2, 0.2);
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.58);
-        color: var(--mauve);
+        background: rgba(255, 255, 255, 0.62);
+        color: var(--text-muted);
         font-size: 0.74rem;
         font-weight: 800;
         transition:
@@ -631,16 +674,21 @@
 
       .chat-pill:hover {
         transform: translateY(-2px);
-        border-color: rgba(170, 29, 106, 0.38);
-        background: rgba(248, 192, 223, 0.38);
-        color: var(--magenta);
+        border-color: rgba(244, 2, 2, 0.4);
+        background: rgba(255, 168, 0, 0.28);
+        color: var(--red);
       }
 
       .chat-pill.selected {
         border-color: transparent;
-        background: linear-gradient(135deg, var(--magenta), var(--coral-light));
+        background: linear-gradient(
+          135deg,
+          var(--red),
+          var(--red-orange),
+          var(--orange)
+        );
         color: var(--white);
-        box-shadow: 0 7px 16px rgba(170, 29, 106, 0.18);
+        box-shadow: 0 7px 16px rgba(244, 2, 2, 0.18);
       }
 
       .message-form,
@@ -649,9 +697,9 @@
         align-items: center;
         gap: 8px;
         padding: 8px;
-        border: 1px solid rgba(150, 97, 125, 0.15);
+        border: 1px solid rgba(244, 2, 2, 0.16);
         border-radius: 18px;
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.74);
       }
 
       .message-form {
@@ -686,7 +734,12 @@
         flex-shrink: 0;
         border: 0;
         border-radius: 13px;
-        background: linear-gradient(135deg, var(--magenta), var(--coral));
+        background: linear-gradient(
+          135deg,
+          var(--red),
+          var(--red-orange),
+          var(--orange)
+        );
         color: var(--white);
         font-size: 1.3rem;
         font-weight: 800;
@@ -729,11 +782,16 @@
         padding: 12px 17px;
         border: 0;
         border-radius: 14px;
-        background: linear-gradient(135deg, var(--magenta), var(--coral));
+        background: linear-gradient(
+          135deg,
+          var(--red),
+          var(--red-orange),
+          var(--orange)
+        );
         color: var(--white);
         font-size: 0.8rem;
         font-weight: 800;
-        box-shadow: 0 10px 20px rgba(170, 29, 106, 0.18);
+        box-shadow: 0 10px 20px rgba(244, 2, 2, 0.18);
       }
 
       .channel-feed {
@@ -744,10 +802,10 @@
 
       .post-card {
         padding: 23px;
-        border: 1px solid rgba(150, 97, 125, 0.13);
+        border: 1px solid rgba(244, 2, 2, 0.13);
         border-radius: 23px;
-        background: rgba(255, 255, 255, 0.64);
-        box-shadow: 0 16px 40px rgba(150, 97, 125, 0.08);
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 16px 40px rgba(244, 2, 2, 0.08);
         backdrop-filter: blur(15px);
       }
 
@@ -776,19 +834,35 @@
       }
 
       .pink-avatar {
-        background: linear-gradient(135deg, var(--pink), var(--magenta));
+        background: linear-gradient(
+          135deg,
+          var(--red-orange),
+          var(--orange-medium)
+        );
       }
 
       .coral-avatar {
-        background: linear-gradient(135deg, var(--coral), var(--coral-light));
+        background: linear-gradient(
+          135deg,
+          var(--orange-dark),
+          var(--gold-dark)
+        );
       }
 
       .mauve-avatar {
-        background: linear-gradient(135deg, var(--mauve), var(--magenta));
+        background: linear-gradient(
+          135deg,
+          var(--red),
+          var(--orange-light)
+        );
       }
 
       .blue-avatar {
-        background: linear-gradient(135deg, #9aa9ff, var(--magenta));
+        background: linear-gradient(
+          135deg,
+          var(--orange-light),
+          var(--yellow)
+        );
       }
 
       .post-user h2 {
@@ -806,7 +880,7 @@
       .post-action {
         border: 0;
         background: transparent;
-        color: var(--mauve);
+        color: var(--text-muted);
       }
 
       .post-menu {
@@ -825,31 +899,31 @@
         align-items: center;
         gap: 13px;
         padding: 13px;
-        border: 1px solid rgba(150, 97, 125, 0.12);
+        border: 1px solid rgba(244, 2, 2, 0.12);
         border-radius: 16px;
       }
 
       .pdf-file {
         background: linear-gradient(
           105deg,
-          rgba(249, 180, 192, 0.32),
-          rgba(255, 255, 255, 0.5)
+          rgba(255, 156, 4, 0.25),
+          rgba(255, 255, 255, 0.64)
         );
       }
 
       .audio-file {
         background: linear-gradient(
           105deg,
-          rgba(248, 192, 223, 0.42),
-          rgba(255, 255, 255, 0.5)
+          rgba(255, 168, 0, 0.3),
+          rgba(255, 255, 255, 0.64)
         );
       }
 
       .powerpoint-file {
         background: linear-gradient(
           105deg,
-          rgba(254, 151, 156, 0.28),
-          rgba(255, 255, 255, 0.5)
+          rgba(255, 93, 1, 0.22),
+          rgba(255, 255, 255, 0.64)
         );
       }
 
@@ -860,18 +934,18 @@
         place-items: center;
         flex-shrink: 0;
         border-radius: 12px;
-        background: var(--magenta);
+        background: var(--red);
         color: var(--white);
         font-size: 0.7rem;
         font-weight: 900;
       }
 
       .audio-file .file-icon {
-        background: var(--mauve);
+        background: var(--orange-dark);
       }
 
       .powerpoint-file .file-icon {
-        background: var(--coral);
+        background: var(--orange-medium);
       }
 
       .file-info {
@@ -900,8 +974,8 @@
         place-items: center;
         flex-shrink: 0;
         border-radius: 10px;
-        background: rgba(255, 255, 255, 0.8);
-        color: var(--magenta);
+        background: rgba(255, 255, 255, 0.84);
+        color: var(--red);
       }
 
       .post-categories {
@@ -914,8 +988,8 @@
       .category-tile {
         padding: 6px 10px;
         border-radius: 8px;
-        background: rgba(248, 192, 223, 0.36);
-        color: var(--mauve);
+        background: rgba(255, 156, 4, 0.24);
+        color: var(--text-muted);
         font-size: 0.68rem;
         font-weight: 800;
       }
@@ -926,7 +1000,7 @@
         gap: 8px;
         margin-top: 20px;
         padding-top: 15px;
-        border-top: 1px solid rgba(150, 97, 125, 0.1);
+        border-top: 1px solid rgba(244, 2, 2, 0.1);
       }
 
       .post-action {
@@ -937,22 +1011,22 @@
       }
 
       .post-action:hover {
-        background: rgba(248, 192, 223, 0.32);
+        background: rgba(255, 156, 4, 0.2);
       }
 
       .dm-button {
         margin-left: auto;
         padding: 8px 16px;
-        border: 1px solid rgba(170, 29, 106, 0.25);
+        border: 1px solid rgba(244, 2, 2, 0.26);
         border-radius: 10px;
-        background: rgba(255, 255, 255, 0.65);
-        color: var(--magenta);
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--red);
         font-size: 0.72rem;
         font-weight: 900;
       }
 
       .dm-button:hover {
-        background: var(--magenta);
+        background: var(--red);
         color: var(--white);
       }
 
@@ -1018,7 +1092,7 @@
       .dm-message-body p {
         padding: 12px 15px;
         border-radius: 5px 17px 17px 17px;
-        background: rgba(248, 192, 223, 0.3);
+        background: rgba(255, 168, 0, 0.2);
         color: var(--text-dark);
         font-size: 0.88rem;
         line-height: 1.55;
@@ -1026,7 +1100,12 @@
 
       .dm-message.sent .dm-message-body p {
         border-radius: 17px 5px 17px 17px;
-        background: linear-gradient(135deg, var(--magenta), var(--coral-light));
+        background: linear-gradient(
+          135deg,
+          var(--red-orange),
+          var(--orange-medium),
+          var(--yellow)
+        );
         color: var(--white);
       }
 
@@ -1038,8 +1117,8 @@
         flex-shrink: 0;
         border: 0;
         border-radius: 11px;
-        background: rgba(248, 192, 223, 0.35);
-        color: var(--magenta);
+        background: rgba(255, 156, 4, 0.24);
+        color: var(--red);
         font-size: 1.2rem;
       }
 
@@ -1142,11 +1221,9 @@
 
           <div class="brand-copy">
             <div class="brand-name">Heard</div>
-            <div class="brand-subtitle">Connect beautifully</div>
           </div>
         </div>
 
-        <!-- Expanded AI Chat sidebar -->
         <div class="ai-chat-section" id="aiChatSidebar">
           <div class="nav-label">AI Chat</div>
 
@@ -1194,7 +1271,6 @@
           </button>
         </div>
 
-        <!-- Compact navigation shown for Channel and DMs views -->
         <div
           class="section-navigation"
           id="sectionNavigation"
@@ -1210,17 +1286,13 @@
             <span>Channel</span>
           </button>
 
-          <button
-            class="section-link compact-section-link"
-            data-page="DMs"
-          >
+          <button class="section-link compact-section-link" data-page="DMs">
             <span class="nav-icon">➤</span>
             <span>DMs</span>
             <span class="notification">3</span>
           </button>
         </div>
 
-        <!-- Expanded DMs sidebar -->
         <div class="dm-directory" id="dmDirectory">
           <div class="nav-label">Direct messages</div>
 
@@ -1274,7 +1346,6 @@
           </button>
         </div>
 
-        <!-- Compact navigation shown for AI Chat view -->
         <div class="compact-navigation" id="compactNavigation">
           <button class="compact-nav-button" data-page="Channel">
             <span class="nav-icon">◈</span>
@@ -1342,35 +1413,19 @@
             id="chatPills"
             aria-label="Chat prompt options"
           >
-            <button
-              type="button"
-              class="chat-pill"
-              data-prompt="Brainstorm ideas"
-            >
+            <button type="button" class="chat-pill" data-prompt="Brainstorm ideas">
               ✦ Brainstorm
             </button>
 
-            <button
-              type="button"
-              class="chat-pill"
-              data-prompt="Summarize"
-            >
+            <button type="button" class="chat-pill" data-prompt="Summarize">
               ≋ Summarize
             </button>
 
-            <button
-              type="button"
-              class="chat-pill"
-              data-prompt="Explain a topic"
-            >
+            <button type="button" class="chat-pill" data-prompt="Explain a topic">
               ◌ Explain
             </button>
 
-            <button
-              type="button"
-              class="chat-pill"
-              data-prompt="Help me write"
-            >
+            <button type="button" class="chat-pill" data-prompt="Help me write">
               Aa Write
             </button>
 
@@ -1382,11 +1437,7 @@
               ◇ Plan
             </button>
 
-            <button
-              type="button"
-              class="chat-pill"
-              data-prompt="Research a topic"
-            >
+            <button type="button" class="chat-pill" data-prompt="Research a topic">
               ⌕ Research
             </button>
 
@@ -2184,25 +2235,8 @@
       }
 
       document
-        .querySelectorAll(".dm-button, .file-action")
-        .forEach((element) => {
-          element.addEventListener("click", () => {
-            if (element.classList.contains("dm-button")) {
-              element.textContent = "Message opened";
-            }
-          });
-        });
-
-      document.querySelectorAll(".file-action").forEach((button) => {
-        button.addEventListener("click", () => {
-          const originalText = button.textContent;
-          button.textContent = "✓";
-
-          window.setTimeout(() => {
-            button.textContent = originalText;
-          }, 1200);
-        });
-      });
+        .querySelectorAll(".post-card")
+        .forEach(attachPostInteractions);
 
       document
         .getElementById("createPostButton")
