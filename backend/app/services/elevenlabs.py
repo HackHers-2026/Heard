@@ -12,6 +12,7 @@ Docs: https://elevenlabs.io/docs/capabilities/speech-to-text
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 
@@ -69,52 +70,113 @@ async def proxy_realtime_stt(client_ws) -> None:
 
 
 async def _elevenlabs_bridge(client_ws) -> None:
-    """Real path: relay audio to ElevenLabs and transcripts back.
+    """Relay extension PCM audio to ElevenLabs Scribe v2 Realtime.
 
-    NOTE: confirm the exact realtime message schema against ElevenLabs' docs for
-    Scribe v2 realtime; parsing below is intentionally defensive.
+    ElevenLabs expects audio as JSON frames carrying base64 PCM
+    ({"message_type": "input_audio_chunk", "audio_base_64": ...}) and emits
+    `partial_transcript` (while speaking) and `committed_transcript` (finalized)
+    events — there is no separate final event.
     """
     import websockets  # local import so the app boots even if not installed
 
-    url = f"{settings.elevenlabs_stt_ws_url}?model_id={settings.elevenlabs_realtime_model}"
-    headers = {"xi-api-key": settings.elevenlabs_api_key}
+    url = (
+        f"{settings.elevenlabs_stt_ws_url}"
+        f"?model_id={settings.elevenlabs_realtime_model}"
+        f"&audio_format=pcm_16000"
+        f"&commit_strategy=vad"
+        f"&vad_silence_threshold_secs=1.0"
+    )
 
-    async with websockets.connect(url, extra_headers=headers, max_size=None) as el_ws:
+    headers = {
+        "xi-api-key": settings.elevenlabs_api_key
+    }
+
+    async with websockets.connect(
+        url,
+        extra_headers=headers,
+        max_size=None,
+    ) as el_ws:
 
         async def pump_audio_to_el():
             while True:
                 message = await client_ws.receive()
+
                 if message.get("type") == "websocket.disconnect":
                     break
-                if (data := message.get("bytes")) is not None:
-                    await el_ws.send(data)
-                elif (text := message.get("text")) is not None:
-                    payload = json.loads(text)
+
+                audio_bytes = message.get("bytes")
+
+                if audio_bytes is not None:
+                    audio_b64 = base64.b64encode(audio_bytes).decode("ascii")
+
+                    await el_ws.send(json.dumps({
+                        "message_type": "input_audio_chunk",
+                        "audio_base_64": audio_b64,
+                    }))
+
+                elif message.get("text") is not None:
+                    payload = json.loads(message["text"])
+
                     if payload.get("type") == "stop":
-                        # Signal end-of-stream to ElevenLabs, then finish.
-                        await el_ws.send(json.dumps({"type": "stop"}))
                         break
 
         async def pump_transcripts_to_client():
             async for raw in el_ws:
                 parsed = _parse_el_message(raw)
+
                 if parsed:
                     await _safe_send(client_ws, parsed)
 
-        await asyncio.gather(pump_audio_to_el(), pump_transcripts_to_client())
+        audio_task = asyncio.create_task(pump_audio_to_el())
+        transcript_task = asyncio.create_task(
+            pump_transcripts_to_client()
+        )
+
+        await audio_task
+
+        # Give ElevenLabs a moment to return the latest transcript.
+        await asyncio.sleep(1)
+
+        transcript_task.cancel()
 
 
 def _parse_el_message(raw) -> dict | None:
-    """Normalize an ElevenLabs realtime frame into our transcript schema."""
+    """Convert ElevenLabs events into the format our extension expects."""
+
     try:
         data = json.loads(raw)
     except (json.JSONDecodeError, TypeError):
         return None
-    text = data.get("text") or data.get("transcript") or data.get("delta")
-    if not text:
-        return None
-    is_final = bool(data.get("is_final") or data.get("final") or data.get("type") == "final")
-    return {"type": "transcript", "text": text, "is_final": is_final}
+
+    message_type = data.get("message_type")
+
+    if message_type == "partial_transcript":
+        return {
+            "type": "transcript",
+            "text": data.get("text", ""),
+            "is_final": False,
+        }
+
+    if message_type == "committed_transcript":
+        return {
+            "type": "transcript",
+            "text": data.get("text", ""),
+            "is_final": True,
+        }
+
+    if message_type in {
+        "auth_error",
+        "quota_exceeded",
+        "transcriber_error",
+        "input_error",
+        "rate_limited",
+    }:
+        return {
+            "type": "error",
+            "detail": data.get("error", message_type),
+        }
+
+    return None
 
 
 async def _stub_stream(client_ws) -> None:
