@@ -13,7 +13,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const returnTo =
@@ -30,7 +29,6 @@ export default function Login() {
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setNotice("");
     setSubmitting(true);
 
     try {
@@ -47,13 +45,20 @@ export default function Login() {
           options: { data: { display_name: displayName.trim() || undefined } },
         });
         if (authError) throw authError;
-        if (data.session) {
-          setToken(data.session.access_token);
-          navigate("/pre-training", { replace: true });
-        } else {
-          setNotice("Check your email to confirm your account, then sign in.");
-          setMode("login");
+
+        // With email confirmation disabled in Supabase, signUp returns a session
+        // immediately. If it doesn't, sign in with the same credentials so the
+        // user still lands in the app without any verification step.
+        let session = data.session;
+        if (!session) {
+          const { data: signInData, error: signInError } =
+            await supabase.auth.signInWithPassword({ email, password });
+          if (signInError) throw signInError;
+          session = signInData.session;
         }
+        if (!session) throw new Error("Account created, but sign in failed. Please sign in.");
+        setToken(session.access_token);
+        navigate("/pre-training", { replace: true });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed. Please try again.");
@@ -65,7 +70,6 @@ export default function Login() {
   function switchMode() {
     setMode((current) => (current === "login" ? "signup" : "login"));
     setError("");
-    setNotice("");
   }
 
   return (
@@ -121,7 +125,6 @@ export default function Login() {
           </label>
 
           {error && <p className="form-message is-error" role="alert">{error}</p>}
-          {notice && <p className="form-message" role="status">{notice}</p>}
 
           <button className="primary-button" type="submit" disabled={submitting}>
             {submitting ? "Please wait…" : mode === "login" ? "Continue" : "Create account"}

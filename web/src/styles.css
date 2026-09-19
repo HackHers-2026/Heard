@@ -137,11 +137,15 @@ textarea::placeholder {
 }
 
 .app-shell.context-collapsed {
-  grid-template-columns: var(--sidebar-width) 0 minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
 }
 
 .app-shell.context-collapsed .context-pane {
   display: none;
+}
+
+.app-shell.context-collapsed .workspace-pane {
+  grid-column: 2;
 }
 
 .primary-sidebar,

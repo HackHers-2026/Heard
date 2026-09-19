@@ -188,6 +188,7 @@ function ChannelContext({
                 <button
                   key={channel.id}
                   type="button"
+                  data-route-item={channel.id}
                   className={`context-row ${active ? "is-active" : ""}`}
                   aria-current={active ? "true" : undefined}
                   title={channel.description}
@@ -338,6 +339,7 @@ function PreTrainingPanes({
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
   const [threadError, setThreadError] = useState("");
+  const [messageError, setMessageError] = useState("");
   const [creating, setCreating] = useState(false);
   const [sending, setSending] = useState(false);
   const targetChannelId = selectedChannel?.id ?? requestedChannelId;
@@ -384,12 +386,14 @@ function PreTrainingPanes({
       setMessages([]);
       setThreadLoading(false);
       setThreadError("");
+      setMessageError("");
       return;
     }
     setActiveThread(null);
     setMessages([]);
     setThreadLoading(true);
     setThreadError("");
+    setMessageError("");
     try {
       const response = await api.thread(threadId);
       if (requestId !== threadRequest.current) return;
@@ -451,7 +455,7 @@ function PreTrainingPanes({
     };
     setMessages((current) => [...current, optimistic]);
     setSending(true);
-    setThreadError("");
+    setMessageError("");
     try {
       const response = await api.postThreadMessage(resourceId, content);
       if (requestId !== sendRequest.current || threadRouteRef.current !== resourceId) return;
@@ -469,18 +473,18 @@ function PreTrainingPanes({
         if (persisted || refreshed.messages.length < 200) {
           setMessages(refreshed.messages);
         } else {
-          setThreadError("Delivery could not be confirmed. To avoid a duplicate, refresh the conversation before sending this message again.");
+          setMessageError("Delivery could not be confirmed. To avoid a duplicate, refresh the conversation before sending this message again.");
           return;
         }
       } catch {
-        setThreadError("Delivery could not be confirmed. To avoid a duplicate, refresh the conversation before sending this message again.");
+        setMessageError("Delivery could not be confirmed. To avoid a duplicate, refresh the conversation before sending this message again.");
         return;
       }
       if (persisted) {
-        setThreadError("Your message was saved, but Heard’s response did not finish. The conversation has been refreshed.");
+        setMessageError("Your message was saved, but Heard’s response did not finish. The conversation has been refreshed.");
         return;
       }
-      setThreadError(readableError(error, "Heard couldn’t send that message."));
+      setMessageError(readableError(error, "Heard couldn’t send that message."));
       throw error;
     } finally {
       if (requestId === sendRequest.current) setSending(false);
@@ -512,6 +516,7 @@ function PreTrainingPanes({
               <button
                 key={thread.id}
                 type="button"
+                data-route-item={thread.id}
                 className={`context-row compact ${thread.id === threadId ? "is-active" : ""}`}
                 aria-current={thread.id === threadId ? "true" : undefined}
                 onClick={() => navigate(`/pre-training/${encodeURIComponent(selectedChannel!.id)}/${encodeURIComponent(thread.id)}`)}
@@ -552,6 +557,7 @@ function PreTrainingPanes({
           )}
           {threadLoading && <div className="workspace-loading"><LoadingRows label="Loading conversation" /></div>}
           {threadError && <InlineError message={threadError} retry={() => void loadThread()} />}
+          {messageError && <InlineError message={messageError} />}
           {!threadLoading && activeThread?.id === threadId && <AIMessageList messages={messages} sending={sending} />}
         </div>
         {activeThread?.id === threadId && (
@@ -666,7 +672,7 @@ function PostTrainingReport({
   peerBusy: string;
   sending: boolean;
   coachingError: string;
-  retryCoaching: () => void;
+  retryCoaching?: () => void;
   peerActionError: string;
 }) {
   const feedback = detail.feedback;
@@ -959,6 +965,7 @@ function PostTrainingPanes({
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
   const [coachingError, setCoachingError] = useState("");
+  const [coachingRetryable, setCoachingRetryable] = useState(false);
   const [peerActionError, setPeerActionError] = useState("");
   const [creating, setCreating] = useState(false);
   const [sending, setSending] = useState(false);
@@ -1014,6 +1021,7 @@ function PostTrainingPanes({
       setDetailLoading(false);
       setDetailError("");
       setCoachingError("");
+      setCoachingRetryable(false);
       setPeerActionError("");
       return;
     }
@@ -1023,12 +1031,14 @@ function PostTrainingPanes({
     setDetailLoading(true);
     setDetailError("");
     setCoachingError("");
+    setCoachingRetryable(false);
     setPeerActionError("");
     try {
       const [detailResponse, segmentResponse] = await Promise.all([api.session(sessionId), api.sessionSegments(sessionId)]);
       if (requestId !== detailRequest.current) return;
       let threadMessages: ThreadMessage[] = [];
       let nextCoachingError = "";
+      let nextCoachingRetryable = false;
       if (detailResponse.thread) {
         try {
           const threadResponse = await api.thread(detailResponse.thread.id);
@@ -1036,12 +1046,14 @@ function PostTrainingPanes({
           threadMessages = threadResponse.messages;
         } catch (error) {
           nextCoachingError = readableError(error, "The session loaded, but its coaching thread did not.");
+          nextCoachingRetryable = true;
         }
       }
       setDetail(detailResponse);
       setSegments(segmentResponse.segments);
       setMessages(threadMessages);
       setCoachingError(nextCoachingError);
+      setCoachingRetryable(nextCoachingRetryable);
     } catch (error) {
       if (requestId === detailRequest.current) setDetailError(readableError(error, "Couldn’t load this session."));
     } finally {
@@ -1053,6 +1065,7 @@ function PostTrainingPanes({
     setSelectedSegment(null);
     setCaptureTranscript("");
     setCaptureDuration("");
+    setCompleting(false);
     setSessionActionError("");
     void loadDetail();
   }, [sessionId]);
@@ -1158,6 +1171,7 @@ function PostTrainingPanes({
     setMessages((current) => [...current, optimistic]);
     setSending(true);
     setCoachingError("");
+    setCoachingRetryable(false);
     try {
       const response = await api.postThreadMessage(resourceId, content);
       if (requestId !== sendRequest.current || sessionRouteRef.current !== sessionAtSend) return;
@@ -1243,6 +1257,7 @@ function PostTrainingPanes({
                 <button
                   key={item.id}
                   type="button"
+                  data-route-item={item.id}
                   className={`context-row compact ${item.id === sessionId ? "is-active" : ""}`}
                   aria-current={item.id === sessionId ? "true" : undefined}
                   onClick={() => navigate(`/post-training/${encodeURIComponent(selectedChannel!.id)}/${encodeURIComponent(item.id)}`)}
@@ -1319,7 +1334,7 @@ function PostTrainingPanes({
               peerBusy={peerBusy}
               sending={sending}
               coachingError={coachingError}
-              retryCoaching={() => void loadDetail()}
+              retryCoaching={coachingRetryable ? () => void loadDetail() : undefined}
               peerActionError={peerActionError}
             />
           )}
@@ -1499,6 +1514,7 @@ function DMPanes({
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState("");
   const [messagesError, setMessagesError] = useState("");
+  const [messagesErrorRetryable, setMessagesErrorRetryable] = useState(false);
   const [sending, setSending] = useState(false);
   const [discoveryChannel, setDiscoveryChannel] = useState("");
   const [peers, setPeers] = useState<LeaderboardEntry[]>([]);
@@ -1536,6 +1552,7 @@ function DMPanes({
       setMessagesReadyFor(null);
       setMessagesLoading(false);
       setMessagesError("");
+      setMessagesErrorRetryable(false);
       return;
     }
     const resourceId = conversationId;
@@ -1543,6 +1560,7 @@ function DMPanes({
     setMessagesReadyFor(null);
     setMessagesLoading(true);
     setMessagesError("");
+    setMessagesErrorRetryable(false);
     try {
       let offset = 0;
       let latest: DMMessage[] = [];
@@ -1559,7 +1577,10 @@ function DMPanes({
       if (requestId !== messagesRequest.current || conversationRouteRef.current !== resourceId) return;
       setConversations((current) => current.map((conversation) => conversation.id === resourceId ? { ...conversation, unread_count: 0 } : conversation));
     } catch (err) {
-      if (requestId === messagesRequest.current) setMessagesError(readableError(err, "Couldn’t load this conversation."));
+      if (requestId === messagesRequest.current) {
+        setMessagesError(readableError(err, "Couldn’t load this conversation."));
+        setMessagesErrorRetryable(true);
+      }
     } finally {
       if (requestId === messagesRequest.current) setMessagesLoading(false);
     }
@@ -1592,6 +1613,7 @@ function DMPanes({
     const requestId = ++sendRequest.current;
     setSending(true);
     setMessagesError("");
+    setMessagesErrorRetryable(false);
     try {
       const response = await api.sendDM(resourceId, content);
       if (requestId !== sendRequest.current || conversationRouteRef.current !== resourceId) return;
@@ -1653,6 +1675,7 @@ function DMPanes({
                   <button
                     key={conversation.id}
                     type="button"
+                    data-route-item={conversation.id}
                     className={`context-row conversation-row ${conversation.id === conversationId ? "is-active" : ""}`}
                     aria-current={conversation.id === conversationId ? "true" : undefined}
                     onClick={() => navigate(`/dms/${encodeURIComponent(conversation.id)}`)}
@@ -1708,7 +1731,7 @@ function DMPanes({
           {!conversationId && <EmptyState title="Choose a conversation" body="Select a conversation from the middle pane, or find an improving speaker by channel." />}
           {messagesLoading && <div className="workspace-loading"><LoadingRows label="Loading messages" /></div>}
           {conversationId && !messagesLoading && !currentUser && <InlineError message={accountError || "Couldn’t load your account details."} retry={retryShell} />}
-          {messagesError && <InlineError message={messagesError} retry={() => void loadMessages()} />}
+          {messagesError && <InlineError message={messagesError} retry={messagesErrorRetryable ? () => void loadMessages() : undefined} />}
           {!messagesLoading && messagesReadyFor === conversationId && currentUser && <DMMessageList messages={messages} currentUserId={currentUser.user.id} />}
         </div>
         {conversationId && messagesReadyFor === conversationId && currentUser && (
@@ -1768,19 +1791,33 @@ export default function HeardWorkspace() {
     setContextCollapsed(false);
   }, [route.mode]);
 
+  useEffect(() => {
+    const tablet = window.matchMedia("(max-width: 56rem)");
+    const expandForTablet = () => {
+      if (tablet.matches) setContextCollapsed(false);
+    };
+    expandForTablet();
+    tablet.addEventListener("change", expandForTablet);
+    return () => tablet.removeEventListener("change", expandForTablet);
+  }, []);
+
   const hasWorkspaceSelection =
     route.mode === "leaderboard" ? Boolean(route.channelId) :
       route.mode === "dms" ? Boolean(route.itemId) : Boolean(route.itemId);
-  const previousWorkspaceSelection = useRef(hasWorkspaceSelection);
+  const previousRoute = useRef<RouteState>(route);
 
   useEffect(() => {
-    const hadWorkspaceSelection = previousWorkspaceSelection.current;
-    previousWorkspaceSelection.current = hasWorkspaceSelection;
+    const prior = previousRoute.current;
+    const hadWorkspaceSelection = prior.mode === "leaderboard" ? Boolean(prior.channelId) : Boolean(prior.itemId);
+    const priorItemId = prior.mode === "leaderboard" ? prior.channelId : prior.itemId;
+    previousRoute.current = route;
     window.requestAnimationFrame(() => {
       if (hasWorkspaceSelection) {
         document.querySelector<HTMLElement>(".workspace-pane")?.focus({ preventScroll: true });
       } else if (hadWorkspaceSelection) {
-        document.querySelector<HTMLElement>(".context-pane .context-row.is-active, .context-pane input, .context-pane")?.focus({ preventScroll: true });
+        const priorRow = Array.from(document.querySelectorAll<HTMLElement>(".context-pane [data-route-item]"))
+          .find((element) => element.dataset.routeItem === priorItemId);
+        (priorRow ?? document.querySelector<HTMLElement>(".context-pane input, .context-pane"))?.focus({ preventScroll: true });
       }
     });
   }, [location.pathname, hasWorkspaceSelection]);
