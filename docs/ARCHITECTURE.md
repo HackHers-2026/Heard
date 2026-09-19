@@ -2,11 +2,18 @@
 
 ## Overview
 
-Heard is **two frontends over one backend**:
+Heard is **two frontends over one backend**, centered on **Backboard as a
+stateful coaching brain** wrapped around Gemini:
 
-- **Chrome extension** — the *live* surface. Sits on the user's active tab, captures speech via Web Speech API + volume via Web Audio API, and shows real-time Gemini coaching nudges as an overlay.
+- **Chrome extension** — the *live* surface. Sits on the user's active tab, captures speech via Web Speech API + volume via Web Audio API, and shows real-time coaching nudges as an overlay.
 - **Web app** — the *reflective* surface. Pre-speech encouragement, post-speech 5-metric report, community feed, mentor connections, and profile radar chart.
-- **FastAPI backend** — the shared brain. Auth, data, all AI calls, scoring, and chat memory.
+- **FastAPI backend** — the shared brain. Auth, data, scoring, and the Backboard + Gemini coaching layer.
+
+The realtime feedback loop is the heart of the product: transcription
+(ElevenLabs) → per-session queue worker → **Backboard** (persistent
+assistant + thread + cross-session memory) → **Gemini** (reasoning) →
+structured feedback → DB + WebSocket → Chrome sidebar. See
+[Coaching brain](#coaching-brain-backboard--gemini) below.
 
 ---
 
@@ -27,16 +34,79 @@ User ──▶ [preptalk]   POST /api/encourage  (quick button or speech planner
                        POST /api/speech/{id}/chat  phase=talksummary
 ```
 
+> **Realtime path.** The extension side panel streams mic audio over the
+> `/ws/stt` WebSocket. The backend proxies it to ElevenLabs, buffers committed
+> transcripts into ~60s `RealtimeSegment`s, and coaches each one through
+> Backboard + Gemini (below). The `POST /api/speech/segment` route is the
+> simpler, synchronous fallback used when not streaming.
+
+---
+
+## Coaching brain (Backboard + Gemini)
+
+Backboard is the **stateful memory assistant** at the center of Heard — not a
+decorative extra API. It gives every user a persistent coach that remembers
+their patterns across sessions. Gemini is the model that produces the coaching;
+Backboard supplies the persistent state, cross-session memory, and tool calling
+around it (`llm_provider="google"`).
+
+```
+Assistant  = the user's long-term coach   (one per user → User.backboard_assistant_id)
+  └─ Thread   = one practice session        (Speech.backboard_thread_id)
+       └─ Message = one 60-second segment    (RealtimeSegment)
+```
+
+Memories are stored at the **assistant level** and shared across that assistant's
+threads, so session 3 draws on what the coach learned in sessions 1–2. Each user
+gets their **own** assistant so memory is never mixed between users.
+
+**Memory is split into two modes on purpose:**
+
+| When | Mode | Behavior |
+|------|------|----------|
+| During the session (per segment) | `Readonly` | Retrieve past coaching memories; do **not** write per-minute noise |
+| At session end (one call) | `Auto` | Extract durable, communication-specific memories for next time |
+
+The assistant is created once per user with a coach `system_prompt`, a custom
+`custom_fact_extraction_prompt`, and a `custom_update_memory_prompt` (so memories
+stay communication-specific), plus one function tool:
+
+- **`get_recent_performance()`** — pulls exact recent scores from the DB (memory
+  is for patterns; the DB is the source of truth for precise analytics). Backboard
+  requests it via a tool call; the backend executes it locally and submits the result.
+
+**Non-blocking, in-order pipeline** — one queue worker per session guarantees
+minute 1 → 2 → 3 reach the Backboard thread in order, and transcription is never
+blocked while Gemini/Backboard think:
+
+```
+RealtimeSegment ─▶ asyncio Queue ─▶ CoachingWorker (one per session)
+                                        │
+                          Backboard thread + memory ──▶ Gemini
+                                        ▼
+        { focus_area, nudge, evidence, progress, next_minute_goal, scores }
+                                        │
+                 ┌──────────────────────┴──────────────────────┐
+                 ▼                                              ▼
+   RealtimeSegment.nudge + feedback_json            WebSocket → Chrome sidebar
+```
+
+The sidebar shows only the short `nudge`; the full structured JSON is saved to
+`RealtimeSegment.feedback_json` for the report. Files:
+`services/backboard.py` (assistant lifecycle, `coach_segment`,
+`finalize_session`, tool), `services/coaching.py` (queue worker),
+`services/segmenter.py` (buffering + `on_segment` hook), `routers/stt.py` (WebSocket wiring).
+
 ---
 
 ## Data model (8 tables, all in Supabase)
 
 | Model | Purpose |
 |-------|---------|
-| `User` | Auth identity; `is_mentor` toggle; `career_tag` |
-| `Speech` | One recording session; `status`: live → done |
+| `User` | Auth identity; `is_mentor` toggle; `career_tag`; `backboard_assistant_id` (long-term coach) |
+| `Speech` | One recording session; `status`: live → done; `backboard_thread_id` (this session's thread) |
 | `SpeechMetrics` | 5-dim scores + overall + summary + suggestions |
-| `RealtimeSegment` | ~2-min transcript chunk + audio stats (volume, variance) |
+| `RealtimeSegment` | ~60s transcript chunk + audio stats + `nudge` + `feedback_json` (full structured coaching) |
 | `CommunityPost` | Shared speech linked to feed; tagged by career/topic |
 | `Like` | User ↔ CommunityPost many-to-many (toggle) |
 | `MentorConnection` | Mentor request; status: pending / accepted / declined |
@@ -79,13 +149,16 @@ Three phases shape Gemini's persona:
 
 | Module | Role | Fallback when no key |
 |--------|------|----------------------|
-| `gemini.py` | encourage / nudge / score / chat | Canned stubs for all 4 functions |
+| `backboard.py` | **Stateful coaching brain** — per-user assistant, per-session thread, cross-session memory, `get_recent_performance` tool; routes Gemini via `llm_provider="google"` | Deterministic stub coaching (assistant/thread skipped) |
+| `coaching.py` | Per-session queue worker — in-order, non-blocking segment coaching + WebSocket push | Runs against stub coaching |
+| `segmenter.py` | Buffers committed transcripts into ~60s `RealtimeSegment`s; fires `on_segment` hook | Always active |
+| `gemini.py` | encourage / nudge / score / chat (non-realtime flows) | Canned stubs for all functions |
 | `scoring.py` | top_speeches / average_metrics / find_mentors | Pure Python, no key needed |
-| `elevenlabs.py` | STT (stretch) | Empty string — extension uses Web Speech API |
-| `backboard.py` | Gemini session memory (stretch) | Not active — ChatMessage table used instead |
-| `tigertable.py` | Analytics pipeline (stretch) | No-op stub |
+| `elevenlabs.py` | Realtime + one-shot STT | Stub transcript stream — pipeline still runs |
+| `tigertable.py` | Analytics pipeline (TigerData / TimescaleDB) | No-op stub |
 
-Every service degrades gracefully — the full app runs and demos without any keys.
+Every service degrades gracefully — the full app runs and demos without any keys,
+including Backboard.
 
 ---
 
@@ -148,6 +221,6 @@ All applied to Supabase project `ytmrxkzczjsiorfcsbmc`.
 ## Scaling notes
 
 - Swap SQLite → Postgres: set `DATABASE_URL` to Supabase connection string — SQLModel handles the rest.
-- Move segment nudges to WebSocket for sub-second latency.
-- Wire TigerTable for real-time leaderboard aggregation (stretch, `tasks/13-stretch-tigertable.md`).
+- Realtime segment nudges already stream over the `/ws/stt` WebSocket; `get_recent_performance` can later query TigerData instead of SQLite.
+- Wire TigerData for real-time leaderboard aggregation (stretch, `tasks/13-stretch-tigertable.md`).
 - LinkedIn OAuth via Auth0 (stretch, `tasks/12-stretch-linkedin-auth.md`).
