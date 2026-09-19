@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import init_db
-from app.routers import encourage, speech, feed, profile, mentor, chat, stt
+from app.routers import encourage, speech, feed, profile, mentor, chat, stt, dashboard
 
 
 @asynccontextmanager
@@ -34,6 +34,7 @@ app.include_router(profile.router)
 app.include_router(mentor.router)
 app.include_router(chat.router)
 app.include_router(stt.router)
+app.include_router(dashboard.router)
 
 
 @app.get("/health", tags=["meta"])
