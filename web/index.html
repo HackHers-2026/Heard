@@ -1343,7 +1343,7 @@
             <button
               type="button"
               class="chat-pill"
-              data-prompt="Summarize this"
+              data-prompt="Summarize"
             >
               ≋ Summarize
             </button>
@@ -1351,7 +1351,7 @@
             <button
               type="button"
               class="chat-pill"
-              data-prompt="Explain this clearly"
+              data-prompt="Explain a topic"
             >
               ◌ Explain
             </button>
@@ -1359,7 +1359,7 @@
             <button
               type="button"
               class="chat-pill"
-              data-prompt="Help me write this"
+              data-prompt="Help me write"
             >
               Aa Write
             </button>
@@ -1375,7 +1375,7 @@
             <button
               type="button"
               class="chat-pill"
-              data-prompt="Research this topic"
+              data-prompt="Research a topic"
             >
               ⌕ Research
             </button>
@@ -1618,6 +1618,7 @@
       const sectionNavigation = document.getElementById("sectionNavigation");
       const compactNavigation = document.getElementById("compactNavigation");
       const dmDirectory = document.getElementById("dmDirectory");
+      const chatPillsContainer = document.getElementById("chatPills");
 
       const aiChatPanel = document.getElementById("aiChatPanel");
       const channelPanel = document.getElementById("channelPanel");
@@ -1629,7 +1630,8 @@
       const messageForm = document.getElementById("messageForm");
       const messageInput = document.getElementById("messageInput");
       const newChatButton = document.getElementById("newChatButton");
-      const chatPills = document.querySelectorAll(".chat-pill");
+      let chatPills = document.querySelectorAll(".chat-pill");
+      let topicFlowStarted = false;
 
       const sectionLinks = document.querySelectorAll(".section-link");
       const compactButtons = document.querySelectorAll(".compact-nav-button");
@@ -1854,6 +1856,29 @@
         messages.appendChild(message);
       }
 
+      function addAiAssistantMessage(text) {
+        const message = document.createElement("div");
+        message.className = "message assistant-message";
+
+        const avatar = document.createElement("div");
+        avatar.className = "message-avatar";
+        avatar.textContent = "✦";
+
+        const content = document.createElement("div");
+        content.className = "message-content";
+
+        const author = document.createElement("span");
+        author.className = "message-author";
+        author.textContent = "Heard AI";
+
+        const messageText = document.createElement("p");
+        messageText.textContent = text;
+
+        content.append(author, messageText);
+        message.append(avatar, content);
+        messages.appendChild(message);
+      }
+
       function addDmMessage(type, text, initials, colorClass, time) {
         const message = document.createElement("div");
         message.className = `dm-message ${type}`;
@@ -1880,10 +1905,98 @@
         dmMessages.appendChild(message);
       }
 
-      function getSelectedPromptText() {
-        return [...document.querySelectorAll(".chat-pill.selected")]
-          .map((pill) => pill.dataset.prompt)
-          .join(", ");
+      function showTopicPills() {
+        chatPillsContainer.innerHTML = `
+          <button
+            type="button"
+            class="chat-pill"
+            data-prompt="Business"
+          >
+            ◇ Business
+          </button>
+
+          <button
+            type="button"
+            class="chat-pill"
+            data-prompt="Technology"
+          >
+            ◉ Tech
+          </button>
+
+          <button
+            type="button"
+            class="chat-pill"
+            data-prompt="Marketing"
+          >
+            ✦ Marketing
+          </button>
+
+          <button
+            type="button"
+            class="chat-pill"
+            data-prompt="Design"
+          >
+            ◌ Design
+          </button>
+
+          <button
+            type="button"
+            class="chat-pill"
+            data-prompt="Education"
+          >
+            Aa Education
+          </button>
+
+          <button
+            type="button"
+            class="chat-pill"
+            data-prompt="Finance"
+          >
+            $ Finance
+          </button>
+
+          <button
+            type="button"
+            class="chat-pill"
+            data-prompt="Personal growth"
+          >
+            ✧ Personal
+          </button>
+        `;
+
+        attachChatPillListeners();
+      }
+
+      function attachChatPillListeners() {
+        chatPills = document.querySelectorAll(".chat-pill");
+
+        chatPills.forEach((pill) => {
+          pill.addEventListener("click", () => {
+            const prompt = pill.dataset.prompt;
+            const isSelected = pill.classList.toggle("selected");
+
+            if (isSelected) {
+              const currentText = messageInput.value.trim();
+
+              messageInput.value = currentText
+                ? `${currentText} ${prompt}`
+                : prompt;
+            } else {
+              const promptPattern = new RegExp(`\\s*${prompt}`, "g");
+
+              messageInput.value = messageInput.value
+                .replace(promptPattern, "")
+                .replace(/\s{2,}/g, " ")
+                .trim();
+            }
+
+            messageInput.focus();
+            messageInput.setSelectionRange(
+              messageInput.value.length,
+              messageInput.value.length
+            );
+          });
+        });
       }
 
       /* AI Chat history */
@@ -1924,35 +2037,22 @@
 
       /* Selectable AI Chat pills */
 
-      chatPills.forEach((pill) => {
-        pill.addEventListener("click", () => {
-          pill.classList.toggle("selected");
-
-          const selectedPrompts = getSelectedPromptText();
-
-          messageInput.placeholder = selectedPrompts
-            ? `${selectedPrompts}...`
-            : "Message Heard AI...";
-
-          messageInput.focus();
-        });
-      });
+      attachChatPillListeners();
 
       messageForm.addEventListener("submit", (event) => {
         event.preventDefault();
 
-        const typedText = messageInput.value.trim();
-        const selectedPrompts = getSelectedPromptText();
+        const text = messageInput.value.trim();
 
-        if (!typedText && !selectedPrompts) {
+        if (!text) {
           return;
         }
 
-        const finalMessage = selectedPrompts && typedText
-          ? `${selectedPrompts}: ${typedText}`
-          : typedText || selectedPrompts;
+        const hasSelectedPill = [...chatPills].some((pill) =>
+          pill.classList.contains("selected")
+        );
 
-        addAiUserMessage(finalMessage);
+        addAiUserMessage(text);
 
         messageInput.value = "";
         messageInput.placeholder = "Message Heard AI...";
@@ -1962,6 +2062,19 @@
         });
 
         messages.scrollTop = messages.scrollHeight;
+
+        if (hasSelectedPill && !topicFlowStarted) {
+          topicFlowStarted = true;
+
+          window.setTimeout(() => {
+            addAiAssistantMessage(
+              "Thanks! Pick a topic below if it is relevant to your message, or enter your own message in the text box!"
+            );
+
+            showTopicPills();
+            messages.scrollTop = messages.scrollHeight;
+          }, 650);
+        }
       });
 
       /* Main navigation */
